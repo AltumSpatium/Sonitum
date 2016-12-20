@@ -1,0 +1,23 @@
+<resources>
+    <string name="app_name">Sonitum</string>
+
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+
+    <string name="action_settings">Settings</string>
+
+    <string name="nav_allMusic">All music</string>
+    <string name="nav_albums">Albums</string>
+    <string name="nav_artists">Artists</string>
+    <string name="nav_settings">Settings</string>
+
+    <string-array name="activity_titles">
+        <item>All music</item>
+        <item>Albums</item>
+        <item>Artists</item>
+        <item>Settings</item>
+    </string-array>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+</resources>

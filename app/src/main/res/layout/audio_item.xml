@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:id="@+id/rlAudioItem">
+    <ImageView
+        android:layout_width="35sp"
+        android:layout_height="35sp"
+        android:layout_centerVertical="true"
+        android:src="@mipmap/ic_audio"
+        android:id="@+id/ivAudioPic"/>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_centerVertical="true"
+        android:layout_toEndOf="@id/ivAudioPic"
+        android:layout_marginStart="5dp"
+        android:paddingTop="5dp"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="25sp"
+            android:textSize="14sp"
+            android:textColor="@color/colorMainText"
+            android:text = ""
+            android:id="@+id/tvAudioTitle"/>
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="25sp"
+            android:textSize="12sp"
+            android:textColor="@color/colorMainText"
+            android:text = ""
+            android:id="@+id/tvAudioArtist"/>
+    </LinearLayout>
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="15sp"
+        android:textSize="11sp"
+        android:text=""
+        android:textColor="@color/colorMainText"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentBottom="true"
+        android:layout_marginStart="3dp"
+        android:layout_marginEnd="3dp"
+        android:id="@+id/tvAudioDuration"/>
+</RelativeLayout>

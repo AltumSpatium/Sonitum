@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:id="@+id/rlAlbumItem">
+    <ImageView
+        android:layout_width="35sp"
+        android:layout_height="35sp"
+        android:layout_centerVertical="true"
+        android:src="@mipmap/ic_album"
+        android:id="@+id/ivAlbumPic"/>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_centerVertical="true"
+        android:layout_toEndOf="@id/ivAlbumPic"
+        android:layout_marginStart="5dp"
+        android:paddingTop="5dp"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="25sp"
+            android:textSize="14sp"
+            android:textColor="@color/colorMainText"
+            android:text = ""
+            android:id="@+id/tvAlbumTitle"/>
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="25sp"
+            android:textSize="12sp"
+            android:textColor="@color/colorMainText"
+            android:text = ""
+            android:id="@+id/tvAlbumArtist"/>
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="25sp"
+            android:textSize="12sp"
+            android:textColor="@color/colorMainText"
+            android:text = ""
+            android:id="@+id/tvAlbumTrackCount"/>
+    </LinearLayout>
+</RelativeLayout>
