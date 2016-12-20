@@ -3,12 +3,11 @@ package smart.sonitum.Fragments;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v7.widget.GridLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.ListView;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -18,6 +17,7 @@ import smart.sonitum.Adapters.AlbumAdapter;
 import smart.sonitum.Adapters.AudioAdapter;
 import smart.sonitum.Data.Audio;
 import smart.sonitum.R;
+import smart.sonitum.Utils.GridSpacingItemDecoration;
 
 public class AlbumsFragment extends Fragment {
     private static final String ARG_ALBUM_TITLES = "albumTitles";
@@ -29,7 +29,7 @@ public class AlbumsFragment extends Fragment {
 
     public boolean tracksShowed = false;
 
-    ListView lvMain;
+    RecyclerView rvMain;
 
     public AlbumsFragment() {}
 
@@ -56,27 +56,26 @@ public class AlbumsFragment extends Fragment {
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_albums, container, false);
 
-        lvMain = (ListView) view.findViewById(R.id.lvMain);
+        rvMain = (RecyclerView) view.findViewById(R.id.rvMain);
+        rvMain.setLayoutManager(new GridLayoutManager(getActivity(), 3));
+        rvMain.addItemDecoration(new GridSpacingItemDecoration(3, 40, true));
 
-        ArrayAdapter<String> albumArrayAdapter = new AlbumAdapter(getActivity(), albumTitles, albums);
-
-        if (lvMain != null)
-            lvMain.setAdapter(albumArrayAdapter);
-
-        lvMain.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        AlbumAdapter albumAdapter = new AlbumAdapter(albumTitles, albums);
+        rvMain.setAdapter(albumAdapter);
+        albumAdapter.setOnItemClickListener(new AlbumAdapter.OnItemClickListener() {
             @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                if (!tracksShowed) {
+            public void OnItemClicked(View view, int position) {
+                /*if (!tracksShowed) {
                     tracks = albums.get(albumTitles.get(position));
-                    ArrayAdapter<Audio> audioArrayAdapter = new AudioAdapter(getActivity(), tracks);
-                    lvMain.setAdapter(audioArrayAdapter);
+                    AudioAdapter audioAdapter = new AudioAdapter(tracks);
+                    rvMain.setAdapter(audioAdapter);
                     tracksShowed = true;
                 } else {
                     Intent intent = new Intent(getActivity(), AudioActivity.class);
                     intent.putExtra("track", tracks.get(position));
                     startActivity(intent);
                     getActivity().overridePendingTransition(R.anim.pull_in_right, R.anim.push_out_left);
-                }
+                }*/
             }
         });
 
@@ -85,9 +84,7 @@ public class AlbumsFragment extends Fragment {
 
     public void exitAlbum() {
         tracksShowed = false;
-        ArrayAdapter<String> albumArrayAdapter = new AlbumAdapter(getActivity(), albumTitles, albums);
-
-        if (lvMain != null)
-            lvMain.setAdapter(albumArrayAdapter);
+        AlbumAdapter albumAdapter = new AlbumAdapter(albumTitles, albums);
+        rvMain.setAdapter(albumAdapter);
     }
 }

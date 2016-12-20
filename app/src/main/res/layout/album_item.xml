@@ -1,43 +1,45 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="horizontal"
-    android:layout_width="match_parent"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="wrap_content"
+    android:background="@drawable/album_item_color"
     android:layout_height="wrap_content"
-    android:id="@+id/rlAlbumItem">
+    android:id="@+id/llAlbumItem">
     <ImageView
-        android:layout_width="35sp"
-        android:layout_height="35sp"
-        android:layout_centerVertical="true"
+        android:layout_width="90sp"
+        android:layout_height="90sp"
+        android:layout_gravity="center"
         android:src="@mipmap/ic_album"
+        android:background="@drawable/album_pic_bg"
         android:id="@+id/ivAlbumPic"/>
     <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_centerVertical="true"
-        android:layout_toEndOf="@id/ivAlbumPic"
+        android:layout_width="wrap_content"
+        android:layout_gravity="start"
+        android:layout_marginEnd="5dp"
         android:layout_marginStart="5dp"
         android:paddingTop="5dp"
         android:layout_height="wrap_content"
         android:orientation="vertical">
         <TextView
-            android:layout_width="match_parent"
-            android:layout_height="25sp"
-            android:textSize="14sp"
+            android:layout_width="wrap_content"
+            android:layout_height="15sp"
+            android:textSize="12sp"
             android:textColor="@color/colorMainText"
             android:text = ""
             android:id="@+id/tvAlbumTitle"/>
         <TextView
-            android:layout_width="match_parent"
-            android:layout_height="25sp"
-            android:textSize="12sp"
+            android:layout_width="wrap_content"
+            android:layout_height="12sp"
+            android:textSize="10sp"
             android:textColor="@color/colorMainText"
             android:text = ""
             android:id="@+id/tvAlbumArtist"/>
         <TextView
-            android:layout_width="match_parent"
-            android:layout_height="25sp"
-            android:textSize="12sp"
+            android:layout_width="wrap_content"
+            android:layout_height="12sp"
+            android:textSize="8sp"
             android:textColor="@color/colorMainText"
             android:text = ""
             android:id="@+id/tvAlbumTrackCount"/>
     </LinearLayout>
-</RelativeLayout>
+</LinearLayout>

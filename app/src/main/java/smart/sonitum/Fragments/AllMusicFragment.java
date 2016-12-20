@@ -8,9 +8,6 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.ListView;
 
 import java.util.ArrayList;
 
@@ -47,24 +44,20 @@ public class AllMusicFragment extends Fragment {
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_allmusic, container, false);
 
-        //ListView lvMain = (ListView) view.findViewById(R.id.lvMain);
         RecyclerView rvMain = (RecyclerView) view.findViewById(R.id.rvMain);
         rvMain.setLayoutManager(new LinearLayoutManager(getActivity()));
 
-        ArrayAdapter<Audio> audioArrayAdapter = new AudioAdapter(this.getContext(), tracks);
-
-        //if (rvMain != null)
-        //    rvMain.setAdapter(audioArrayAdapter);
-
-        //rvMain.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-        //    @Override
-        //    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        //        Intent intent = new Intent(getActivity(), AudioActivity.class);
-        //        intent.putExtra("track", tracks.get(position));
-        //        startActivity(intent);
-        //        getActivity().overridePendingTransition(R.anim.pull_in_right, R.anim.push_out_left);
-        //    }
-        //});
+        AudioAdapter audioAdapter = new AudioAdapter(tracks);
+        rvMain.setAdapter(audioAdapter);
+        audioAdapter.setOnItemClickListener(new AudioAdapter.OnItemClickListener() {
+            @Override
+            public void OnItemClicked(View view, int position) {
+                Intent intent = new Intent(getActivity(), AudioActivity.class);
+                intent.putExtra("track", tracks.get(position));
+                startActivity(intent);
+                getActivity().overridePendingTransition(R.anim.pull_in_right, R.anim.push_out_left);
+            }
+        });
 
         return view;
     }

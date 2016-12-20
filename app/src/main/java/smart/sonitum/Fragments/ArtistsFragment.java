@@ -68,8 +68,8 @@ public class ArtistsFragment extends Fragment {
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 if (!tracksShowed) {
                     tracks = artistsTracks.get(artists.get(position));
-                    ArrayAdapter<Audio> audioArrayAdapter = new AudioAdapter(getActivity(), tracks);
-                    lvMain.setAdapter(audioArrayAdapter);
+                    //ArrayAdapter<Audio> audioArrayAdapter = new AudioAdapter(getActivity(), tracks);
+                    //lvMain.setAdapter(audioArrayAdapter);
                     tracksShowed = true;
                 } else {
                     Intent intent = new Intent(getActivity(), AudioActivity.class);
