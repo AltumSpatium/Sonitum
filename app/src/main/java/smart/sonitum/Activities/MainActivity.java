@@ -28,11 +28,12 @@ import smart.sonitum.Data.Audio;
 import smart.sonitum.Fragments.AlbumsFragment;
 import smart.sonitum.Fragments.ArtistsFragment;
 import smart.sonitum.Fragments.AllMusicFragment;
+import smart.sonitum.Fragments.CurrentAlbumFragment;
 import smart.sonitum.Helpers.AudioRepository;
 import smart.sonitum.Helpers.DBHelper;
 import smart.sonitum.R;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements AlbumsFragment.OnFragmentInteractionListener {
     private NavigationView navigationView;
     private DrawerLayout drawer;
     private Toolbar toolbar;
@@ -42,9 +43,11 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG_MUSIC = "music";
     private static final String TAG_ALBUMS = "albums";
     private static final String TAG_ARTISTS = "artists";
+    private static final String TAG_CURRENT_ALBUM = "current_album";
     public static String CURRENT_TAG = TAG_MUSIC;
 
     private String[] activityTitles;
+    private String currentAlbum;
 
     LinearLayout llNowPlaying;
 
@@ -75,7 +78,7 @@ public class MainActivity extends AppCompatActivity {
         if (savedInstanceState == null) {
             navItemIndex = 0;
             CURRENT_TAG = TAG_MUSIC;
-            loadMusicFragment();
+            loadMusicFragment(null);
         }
 
         fillTracks();
@@ -105,8 +108,6 @@ public class MainActivity extends AppCompatActivity {
                         navItemIndex = 0;
                 }
 
-                drawer.setBackgroundResource(R.color.colorDrawerBg);
-
                 if (item.isChecked()) {
                     item.setChecked(false);
                 } else {
@@ -114,7 +115,7 @@ public class MainActivity extends AppCompatActivity {
                 }
                 item.setChecked(true);
 
-                loadMusicFragment();
+                loadMusicFragment(null);
 
                 return true;
             }
@@ -126,9 +127,9 @@ public class MainActivity extends AppCompatActivity {
         actionBarDrawerToggle.syncState();
     }
 
-    private void loadMusicFragment() {
+    private void loadMusicFragment(String toolbarTitle) {
         selectNavMenu();
-        setToolbarTitle();
+        setToolbarTitle(toolbarTitle);
 
         if (getSupportFragmentManager().findFragmentByTag(CURRENT_TAG) != null) {
             drawer.closeDrawers();
@@ -141,6 +142,8 @@ public class MainActivity extends AppCompatActivity {
                 Fragment fragment = getMusicFragment();
                 FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
                 fragmentTransaction.replace(R.id.frame, fragment, CURRENT_TAG);
+                if (currentAlbum != null)
+                    fragmentTransaction.addToBackStack(null);
                 fragmentTransaction.commitAllowingStateLoss();
             }
         };
@@ -156,11 +159,21 @@ public class MainActivity extends AppCompatActivity {
         navigationView.getMenu().getItem(navItemIndex).setChecked(true);
     }
 
-    private void setToolbarTitle() {
-        getSupportActionBar().setTitle(activityTitles[navItemIndex]);
+    private void setToolbarTitle(String title) {
+        if (title == null)
+            getSupportActionBar().setTitle(activityTitles[navItemIndex]);
+        else {
+            if (title.length() > 15) title = title.substring(0, 13) + "...";
+            getSupportActionBar().setTitle(title);
+        }
     }
 
     private Fragment getMusicFragment() {
+        if (CURRENT_TAG.equals(TAG_CURRENT_ALBUM) && currentAlbum != null) {
+            ArrayList<Audio> albumTracks = albums.get(currentAlbum);
+            return CurrentAlbumFragment.newInstance(albumTracks);
+        }
+
         switch (navItemIndex) {
             case 0:
                 return AllMusicFragment.newInstance(tracks);
@@ -298,15 +311,23 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
+    public void onFragmentInteraction(String album) {
+        currentAlbum = album;
+        CURRENT_TAG = TAG_CURRENT_ALBUM;
+
+        loadMusicFragment(currentAlbum);
+    }
+
+    @Override
     public void onBackPressed() {
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
         } else {
-            AlbumsFragment fragmentAlbum = (AlbumsFragment) getSupportFragmentManager().findFragmentByTag(TAG_ALBUMS);
-            if (fragmentAlbum != null && fragmentAlbum.tracksShowed) {
-                fragmentAlbum.exitAlbum();
-                return;
+            if (currentAlbum != null) {
+                currentAlbum = null;
+                CURRENT_TAG = TAG_ALBUMS;
+                setToolbarTitle(null);
             }
 
             ArtistsFragment fragmentArtist = (ArtistsFragment) getSupportFragmentManager().findFragmentByTag(TAG_ARTISTS);

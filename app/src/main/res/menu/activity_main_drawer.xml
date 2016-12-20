@@ -19,5 +19,4 @@
             android:icon="@drawable/ic_menu_manage"
             android:title="@string/nav_settings" />
     </group>
-
 </menu>

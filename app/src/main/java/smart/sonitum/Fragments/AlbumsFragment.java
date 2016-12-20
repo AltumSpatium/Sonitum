@@ -1,6 +1,6 @@
 package smart.sonitum.Fragments;
 
-import android.content.Intent;
+import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.GridLayoutManager;
@@ -12,9 +12,7 @@ import android.view.ViewGroup;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import smart.sonitum.Activities.AudioActivity;
 import smart.sonitum.Adapters.AlbumAdapter;
-import smart.sonitum.Adapters.AudioAdapter;
 import smart.sonitum.Data.Audio;
 import smart.sonitum.R;
 import smart.sonitum.Utils.GridSpacingItemDecoration;
@@ -25,9 +23,8 @@ public class AlbumsFragment extends Fragment {
 
     private ArrayList<String> albumTitles;
     private HashMap<String, ArrayList<Audio>> albums;
-    private ArrayList<Audio> tracks;
 
-    public boolean tracksShowed = false;
+    private OnFragmentInteractionListener listener;
 
     RecyclerView rvMain;
 
@@ -65,26 +62,30 @@ public class AlbumsFragment extends Fragment {
         albumAdapter.setOnItemClickListener(new AlbumAdapter.OnItemClickListener() {
             @Override
             public void OnItemClicked(View view, int position) {
-                /*if (!tracksShowed) {
-                    tracks = albums.get(albumTitles.get(position));
-                    AudioAdapter audioAdapter = new AudioAdapter(tracks);
-                    rvMain.setAdapter(audioAdapter);
-                    tracksShowed = true;
-                } else {
-                    Intent intent = new Intent(getActivity(), AudioActivity.class);
-                    intent.putExtra("track", tracks.get(position));
-                    startActivity(intent);
-                    getActivity().overridePendingTransition(R.anim.pull_in_right, R.anim.push_out_left);
-                }*/
+                openAlbum(position);
             }
         });
 
         return view;
     }
 
-    public void exitAlbum() {
-        tracksShowed = false;
-        AlbumAdapter albumAdapter = new AlbumAdapter(albumTitles, albums);
-        rvMain.setAdapter(albumAdapter);
+    public interface OnFragmentInteractionListener {
+        void onFragmentInteraction(String album);
+    }
+
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        if (context instanceof OnFragmentInteractionListener) {
+            listener = (OnFragmentInteractionListener) context;
+        } else {
+            throw new RuntimeException(context.toString()
+                    + " must implement OnFragmentInteractionListener");
+        }
+    }
+
+    public void openAlbum(int position) {
+        String album = albumTitles.get(position);
+        listener.onFragmentInteraction(album);
     }
 }

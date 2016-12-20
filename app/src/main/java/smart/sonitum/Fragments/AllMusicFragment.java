@@ -15,6 +15,7 @@ import smart.sonitum.Activities.AudioActivity;
 import smart.sonitum.Adapters.AudioAdapter;
 import smart.sonitum.Data.Audio;
 import smart.sonitum.R;
+import smart.sonitum.Utils.VerticalSpaceItemDecoration;
 
 public class AllMusicFragment extends Fragment {
     private static final String ARG_TRACKS = "tracks";
@@ -46,6 +47,7 @@ public class AllMusicFragment extends Fragment {
 
         RecyclerView rvMain = (RecyclerView) view.findViewById(R.id.rvMain);
         rvMain.setLayoutManager(new LinearLayoutManager(getActivity()));
+        rvMain.addItemDecoration(new VerticalSpaceItemDecoration(5));
 
         AudioAdapter audioAdapter = new AudioAdapter(tracks);
         rvMain.setAdapter(audioAdapter);
