@@ -1,8 +1,11 @@
 package smart.sonitum.Fragments;
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,26 +21,26 @@ import smart.sonitum.Adapters.ArtistAdapter;
 import smart.sonitum.Adapters.AudioAdapter;
 import smart.sonitum.Data.Audio;
 import smart.sonitum.R;
+import smart.sonitum.Utils.VerticalSpaceItemDecoration;
 
 public class ArtistsFragment extends Fragment {
     private static final String ARG_ARTISTS = "artists";
-    private static final String ARG_ARTISTS_TRACKS = "artistsTracks";
+    private static final String ARG_ARTISTS_ALBUMS = "artistsAlbums";
 
     private ArrayList<String> artists;
-    private HashMap<String, ArrayList<Audio>> artistsTracks;
-    private ArrayList<Audio> tracks;
+    private HashMap<String, ArrayList<String>> artistsAlbums;
 
-    public boolean tracksShowed = false;
+    private OnFragmentInteractionListener listener;
 
-    ListView lvMain;
+    RecyclerView rvMain;
 
     public ArtistsFragment() {}
 
-    public static ArtistsFragment newInstance(ArrayList<String> artists, HashMap<String, ArrayList<Audio>> artistsTracks) {
+    public static ArtistsFragment newInstance(ArrayList<String> artists, HashMap<String, ArrayList<String>> artistsAlbums) {
         ArtistsFragment fragment = new ArtistsFragment();
         Bundle args = new Bundle();
         args.putStringArrayList(ARG_ARTISTS, artists);
-        args.putSerializable(ARG_ARTISTS_TRACKS, artistsTracks);
+        args.putSerializable(ARG_ARTISTS_ALBUMS, artistsAlbums);
         fragment.setArguments(args);
         return fragment;
     }
@@ -47,7 +50,7 @@ public class ArtistsFragment extends Fragment {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
             artists = getArguments().getStringArrayList(ARG_ARTISTS);
-            artistsTracks = (HashMap<String, ArrayList<Audio>>) getArguments().getSerializable(ARG_ARTISTS_TRACKS);
+            artistsAlbums = (HashMap<String, ArrayList<String>>) getArguments().getSerializable(ARG_ARTISTS_ALBUMS);
         }
     }
 
@@ -56,38 +59,40 @@ public class ArtistsFragment extends Fragment {
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_artists, container, false);
 
-        lvMain = (ListView) view.findViewById(R.id.lvMain);
+        rvMain = (RecyclerView) view.findViewById(R.id.rvMain);
+        rvMain.setLayoutManager(new LinearLayoutManager(getActivity()));
+        rvMain.addItemDecoration(new VerticalSpaceItemDecoration(5));
 
-        ArrayAdapter<String> artistArrayAdapter = new ArtistAdapter(getActivity(), artists, artistsTracks);
-
-        if (lvMain != null)
-            lvMain.setAdapter(artistArrayAdapter);
-
-        lvMain.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        ArtistAdapter artistAdapter = new ArtistAdapter(artists, artistsAlbums);
+        rvMain.setAdapter(artistAdapter);
+        artistAdapter.setOnItemClickListener(new ArtistAdapter.OnItemClickListener() {
             @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                if (!tracksShowed) {
-                    tracks = artistsTracks.get(artists.get(position));
-                    //ArrayAdapter<Audio> audioArrayAdapter = new AudioAdapter(getActivity(), tracks);
-                    //lvMain.setAdapter(audioArrayAdapter);
-                    tracksShowed = true;
-                } else {
-                    Intent intent = new Intent(getActivity(), AudioActivity.class);
-                    intent.putExtra("track", tracks.get(position));
-                    startActivity(intent);
-                    getActivity().overridePendingTransition(R.anim.pull_in_right, R.anim.push_out_left);
-                }
+            public void OnItemClicked(View view, int position) {
+                openArtist(position);
             }
         });
 
         return view;
     }
 
-    public void exitArtist() {
-        tracksShowed = false;
-        ArrayAdapter<String> artistArrayAdapter = new ArtistAdapter(getActivity(), artists, artistsTracks);
-
-        if (lvMain != null)
-            lvMain.setAdapter(artistArrayAdapter);
+    public interface OnFragmentInteractionListener {
+        void onFragmentInteraction(String message, boolean isAlbum);
     }
+
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        if (context instanceof OnFragmentInteractionListener) {
+            listener = (OnFragmentInteractionListener) context;
+        } else {
+            throw new RuntimeException(context.toString()
+                    + " must implement OnFragmentInteractionListener");
+        }
+    }
+
+    public void openArtist(int position) {
+        String artist = artists.get(position);
+        listener.onFragmentInteraction(artist, false);
+    }
+
 }

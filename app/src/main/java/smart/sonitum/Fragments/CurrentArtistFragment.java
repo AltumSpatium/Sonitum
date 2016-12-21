@@ -17,7 +17,7 @@ import smart.sonitum.Data.Audio;
 import smart.sonitum.R;
 import smart.sonitum.Utils.GridSpacingItemDecoration;
 
-public class AlbumsFragment extends Fragment {
+public class CurrentArtistFragment extends Fragment {
     private static final String ARG_ALBUM_TITLES = "albumTitles";
     private static final String ARG_ALBUMS = "albums";
 
@@ -28,7 +28,7 @@ public class AlbumsFragment extends Fragment {
 
     RecyclerView rvMain;
 
-    public AlbumsFragment() {}
+    public CurrentArtistFragment() {}
 
     public static AlbumsFragment newInstance(ArrayList<String> albumTitles, HashMap<String, ArrayList<Audio>> albums) {
         AlbumsFragment fragment = new AlbumsFragment();

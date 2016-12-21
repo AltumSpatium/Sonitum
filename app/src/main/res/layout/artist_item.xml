@@ -3,6 +3,7 @@
     android:orientation="horizontal"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:background="@drawable/audio_item_color"
     android:id="@+id/rlArtistItem">
     <ImageView
         android:layout_width="35sp"
@@ -31,6 +32,6 @@
             android:textSize="12sp"
             android:textColor="@color/colorMainText"
             android:text = ""
-            android:id="@+id/tvArtistTrackCount"/>
+            android:id="@+id/tvArtistAlbumsCount"/>
     </LinearLayout>
 </RelativeLayout>

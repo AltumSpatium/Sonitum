@@ -1,44 +1,73 @@
 package smart.sonitum.Adapters;
 
-import android.content.Context;
-import android.support.annotation.NonNull;
+import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import smart.sonitum.Data.Audio;
 import smart.sonitum.R;
 
-public class ArtistAdapter extends ArrayAdapter<String> {
-    private HashMap<String, ArrayList<Audio>> artistsTracks;
+public class ArtistAdapter extends RecyclerView.Adapter<ArtistAdapter.ArtistViewHolder> {
+    static class ArtistViewHolder extends RecyclerView.ViewHolder {
+        View self;
+        TextView tvArtist;
+        TextView tvArtistAlbumsCount;
 
-    public ArtistAdapter(Context ctx, ArrayList<String> artists, HashMap<String, ArrayList<Audio>> artistsTracks) {
-        super(ctx, R.layout.artist_item, artists);
-        this.artistsTracks = artistsTracks;
+        ArtistViewHolder(View view) {
+            super(view);
+
+            self = view;
+            tvArtist = (TextView) view.findViewById(R.id.tvArtist);
+            tvArtistAlbumsCount = (TextView) view.findViewById(R.id.tvArtistAlbumsCount);
+        }
+    }
+
+    private OnItemClickListener onItemClickListener;
+    private ArrayList<String> artists;
+    private HashMap<String, ArrayList<String>> artistsAlbums;
+
+    public ArtistAdapter(ArrayList<String> artists, HashMap<String, ArrayList<String>> artistsAlbums) {
+        this.artists = artists;
+        this.artistsAlbums = artistsAlbums;
     }
 
     @Override
-    @NonNull
-    public View getView(int position, View convertView, ViewGroup parent) {
-        String artist = getItem(position);
-        ArrayList<Audio> tracks = artistsTracks.get(artist);
-        String tracksCount = "Tracks: " + tracks.size();
+    public int getItemCount() {
+        return artists.size();
+    }
 
-        if (convertView == null) {
-            convertView = LayoutInflater.from(getContext())
-                    .inflate(R.layout.artist_item, null);
-        }
+    @Override
+    public ArtistViewHolder onCreateViewHolder(ViewGroup viewGroup, int typeView) {
+        View view = LayoutInflater.from(viewGroup.getContext())
+                .inflate(R.layout.artist_item, viewGroup, false);
+        return new ArtistViewHolder(view);
+    }
 
-        ((TextView) convertView.findViewById(R.id.tvArtist))
-                .setText(artist);
-        ((TextView) convertView.findViewById(R.id.tvArtistTrackCount))
-                .setText(tracksCount);
+    @Override
+    public void onBindViewHolder(ArtistViewHolder avh, final int position) {
+        String artist = artists.get(position);
+        ArrayList<String> albums = artistsAlbums.get(artist);
+        String albumsCount = "Albums: " + albums.size();
 
-        return convertView;
+        avh.tvArtist.setText(artist);
+        avh.tvArtistAlbumsCount.setText(albumsCount);
+        avh.self.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                onItemClickListener.OnItemClicked(v, position);
+            }
+        });
+    }
+
+    public interface OnItemClickListener {
+        void OnItemClicked(View view, int position);
+    }
+
+    public void setOnItemClickListener(OnItemClickListener onItemClickListener) {
+        this.onItemClickListener = onItemClickListener;
     }
 }
