@@ -10,15 +10,22 @@ public class Audio implements Parcelable {
     private String artist;
     private String title;
     private String genre;
+    private String trackNumber;
+    private String albumArt;
+    private String year;
     private String data;
 
-    public Audio(long id, int totalTime, String album, String artist, String title, String genre, String data) {
+    public Audio(long id, int totalTime, String album, String artist, String title, String genre,
+                 String trackNumber, String albumArt, String year, String data) {
         this.id = id;
         this.totalTime = totalTime;
         this.album = album;
         this.artist = artist;
         this.title = title;
         this.genre = genre;
+        this.trackNumber = trackNumber;
+        this.albumArt = albumArt;
+        this.year = year;
         this.data = data;
     }
 
@@ -29,6 +36,9 @@ public class Audio implements Parcelable {
         artist = in.readString();
         title = in.readString();
         genre = in.readString();
+        trackNumber = in.readString();
+        albumArt = in.readString();
+        year = in.readString();
         data = in.readString();
     }
 
@@ -92,6 +102,30 @@ public class Audio implements Parcelable {
         this.genre = genre;
     }
 
+    public String getTrackNumber() {
+        return trackNumber;
+    }
+
+    public void setTrackNumber(String trackNumber) {
+        this.trackNumber = trackNumber;
+    }
+
+    public String getAlbumArt() {
+        return albumArt;
+    }
+
+    public void setAlbumArt(String albumArt) {
+        this.albumArt = albumArt;
+    }
+
+    public String getYear() {
+        return year;
+    }
+
+    public void setYear(String year) {
+        this.year = year;
+    }
+
     public String getData() {
         return data;
     }
@@ -113,6 +147,9 @@ public class Audio implements Parcelable {
         dest.writeString(artist);
         dest.writeString(title);
         dest.writeString(genre);
+        dest.writeString(trackNumber);
+        dest.writeString(albumArt);
+        dest.writeString(year);
         dest.writeString(data);
     }
 }

@@ -1,6 +1,7 @@
 package smart.sonitum.Activities;
 
 import android.content.ContentResolver;
+import android.content.res.Configuration;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
@@ -17,6 +18,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.LinearLayout;
 
 import java.util.ArrayList;
@@ -27,17 +29,17 @@ import java.util.HashMap;
 import smart.sonitum.Data.Audio;
 import smart.sonitum.Fragments.AlbumsFragment;
 import smart.sonitum.Fragments.ArtistsFragment;
-import smart.sonitum.Fragments.AllMusicFragment;
-import smart.sonitum.Fragments.CurrentAlbumFragment;
-import smart.sonitum.Fragments.CurrentArtistFragment;
+import smart.sonitum.Fragments.AudioFragment;
 import smart.sonitum.Helpers.AudioRepository;
 import smart.sonitum.Helpers.DBHelper;
 import smart.sonitum.R;
 
-public class MainActivity extends AppCompatActivity implements AlbumsFragment.OnFragmentInteractionListener, ArtistsFragment.OnFragmentInteractionListener, CurrentArtistFragment.OnFragmentInteractionListener {
+public class MainActivity extends AppCompatActivity implements AlbumsFragment.OnAlbumOpenListener,
+        ArtistsFragment.OnArtistOpenListener {
     private NavigationView navigationView;
     private DrawerLayout drawer;
     private Toolbar toolbar;
+    private ActionBarDrawerToggle actionBarDrawerToggle;
 
     public static int navItemIndex = 0;
 
@@ -77,6 +79,10 @@ public class MainActivity extends AppCompatActivity implements AlbumsFragment.On
         activityTitles = getResources().getStringArray(R.array.activity_titles);
 
         setUpNavigationMenu();
+
+        dbHelper = new DBHelper(this);
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
+        dbHelper.onUpgrade(db, 0, 1);
 
         if (savedInstanceState == null) {
             navItemIndex = 0;
@@ -118,7 +124,6 @@ public class MainActivity extends AppCompatActivity implements AlbumsFragment.On
                 } else {
                     item.setChecked(true);
                 }
-                item.setChecked(true);
 
                 loadMusicFragment(null);
 
@@ -126,10 +131,16 @@ public class MainActivity extends AppCompatActivity implements AlbumsFragment.On
             }
         });
 
-        ActionBarDrawerToggle actionBarDrawerToggle = new ActionBarDrawerToggle(
+        actionBarDrawerToggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
-        drawer.setDrawerListener(actionBarDrawerToggle);
-        actionBarDrawerToggle.syncState();
+        actionBarDrawerToggle.setDrawerIndicatorEnabled(true);
+        actionBarDrawerToggle.setToolbarNavigationClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                onBackPressed();
+            }
+        });
+        drawer.addDrawerListener(actionBarDrawerToggle);
     }
 
     private void loadMusicFragment(String toolbarTitle) {
@@ -137,8 +148,11 @@ public class MainActivity extends AppCompatActivity implements AlbumsFragment.On
         setToolbarTitle(toolbarTitle);
 
         if (getSupportFragmentManager().findFragmentByTag(CURRENT_TAG) != null) {
-            drawer.closeDrawers();
-            return;
+            currentAlbum = currentArtist = null;
+            int back = getSupportFragmentManager().getBackStackEntryCount();
+            while (back-- > 0) {
+                getSupportFragmentManager().popBackStack();
+            }
         }
 
         Runnable mPendingRunnable = new Runnable() {
@@ -152,11 +166,9 @@ public class MainActivity extends AppCompatActivity implements AlbumsFragment.On
                 fragmentTransaction.commitAllowingStateLoss();
             }
         };
-
         mHandler.post(mPendingRunnable);
 
         drawer.closeDrawers();
-
         invalidateOptionsMenu();
     }
 
@@ -168,23 +180,29 @@ public class MainActivity extends AppCompatActivity implements AlbumsFragment.On
         if (title == null)
             getSupportActionBar().setTitle(activityTitles[navItemIndex]);
         else {
-            if (title.length() > 15) title = title.substring(0, 13) + "...";
+            if (title.length() > 25) title = title.substring(0, 22) + "...";
             getSupportActionBar().setTitle(title);
         }
     }
 
     private Fragment getMusicFragment() {
         if (CURRENT_TAG.equals(TAG_CURRENT_ALBUM) && currentAlbum != null) {
+            actionBarDrawerToggle.setDrawerIndicatorEnabled(false);
+            actionBarDrawerToggle.setHomeAsUpIndicator(R.drawable.arrow_back);
+
             ArrayList<Audio> albumTracks = albums.get(currentAlbum);
-            return CurrentAlbumFragment.newInstance(albumTracks);
+            return AudioFragment.newInstance(albumTracks);
         } else if (CURRENT_TAG.equals(TAG_CURRENT_ARTIST) && currentArtist != null) {
+            actionBarDrawerToggle.setDrawerIndicatorEnabled(false);
+            actionBarDrawerToggle.setHomeAsUpIndicator(R.drawable.arrow_back);
+
             ArrayList<String> albumTitles = artistsAlbums.get(currentArtist);
-            return CurrentArtistFragment.newInstance(albumTitles, albums);
+            return AlbumsFragment.newInstance(albumTitles, albums);
         }
 
         switch (navItemIndex) {
             case 0:
-                return AllMusicFragment.newInstance(tracks);
+                return AudioFragment.newInstance(tracks);
             case 1:
                 ArrayList<String> albumTitles = getAlbumTitles();
                 return AlbumsFragment.newInstance(albumTitles, albums);
@@ -192,12 +210,16 @@ public class MainActivity extends AppCompatActivity implements AlbumsFragment.On
                 ArrayList<String> artists = getArtistsAlbums();
                 return ArtistsFragment.newInstance(artists, artistsAlbums);
             default:
-                return AllMusicFragment.newInstance(tracks);
+                return AudioFragment.newInstance(tracks);
         }
     }
 
-    private ArrayList<Audio> loadFromCursor(Cursor c) {
+    private ArrayList<Audio> loadFromCursor(Cursor c, String place) {
         ArrayList<Audio> tracks = new ArrayList<>();
+        String[] genresProjection = {
+                MediaStore.Audio.Genres._ID,
+                MediaStore.Audio.Genres.NAME
+        };
 
         if (c != null) {
             for (int i = 0; i < c.getCount(); i++) {
@@ -208,10 +230,29 @@ public class MainActivity extends AppCompatActivity implements AlbumsFragment.On
                 String album = c.getString(c.getColumnIndex(MediaStore.Audio.Media.ALBUM));
                 String artist = c.getString(c.getColumnIndex(MediaStore.Audio.Media.ARTIST));
                 String title = c.getString(c.getColumnIndex(MediaStore.Audio.Media.TITLE));
-                String genre = "Other";
+                String genre = "";
+                String trackNumber = c.getString(c.getColumnIndex(MediaStore.Audio.Media.TRACK));
+                String albumArt = "";
+                String year = c.getString(c.getColumnIndex(MediaStore.Audio.Media.YEAR));
                 String data = c.getString(c.getColumnIndex(MediaStore.Audio.Media.DATA));
 
-                Audio track = new Audio(id, totalTime, album, artist, title, genre, data);
+                Uri uri = MediaStore.Audio.Genres.getContentUriForAudioId(place, (int)id);
+                Cursor genresCursor = getContentResolver().query(uri, genresProjection, null, null, null);
+                if (genresCursor != null) {
+                    int genreColIndex = genresCursor.getColumnIndex(MediaStore.Audio.Genres.NAME);
+
+                    if (genresCursor.moveToFirst()) {
+                        do {
+                            genre += genresCursor.getString(genreColIndex) + "/";
+                        } while (genresCursor.moveToNext());
+                    }
+                    genre = genre.substring(0, genre.length() - 2);
+                    genresCursor.close();
+                } else {
+                    genre = "Other";
+                }
+
+                Audio track = new Audio(id, totalTime, album, artist, title, genre, trackNumber, albumArt, year, data);
                 if (!track.getArtist().equals("<unknown>"))
                     tracks.add(track);
             }
@@ -230,6 +271,8 @@ public class MainActivity extends AppCompatActivity implements AlbumsFragment.On
                 MediaStore.Audio.Media.ALBUM,
                 MediaStore.Audio.Media.ARTIST,
                 MediaStore.Audio.Media.TITLE,
+                MediaStore.Audio.Media.TRACK,
+                MediaStore.Audio.Media.YEAR,
                 MediaStore.Audio.Media.DATA
         };
 
@@ -241,8 +284,8 @@ public class MainActivity extends AppCompatActivity implements AlbumsFragment.On
         Cursor cursorExt = contentResolver.query(uriExternal, projection, null, null, null);
         Cursor cursorInt = contentResolver.query(uriInternal, projection, null, null, null);
 
-        tracks = loadFromCursor(cursorExt);
-        tracks.addAll(loadFromCursor(cursorInt));
+        tracks = loadFromCursor(cursorExt, "external");
+        tracks.addAll(loadFromCursor(cursorInt, "internal"));
         Collections.sort(tracks, new Comparator<Audio>() {
             @Override
             public int compare(Audio o1, Audio o2) {
@@ -273,7 +316,8 @@ public class MainActivity extends AppCompatActivity implements AlbumsFragment.On
         ArrayList<String> artists = new ArrayList<>();
 
         for (String artist : artistsAlbums.keySet())
-            artists.add(artist);
+            if (artistsAlbums.get(artist).size() != 0)
+                artists.add(artist);
 
         Collections.sort(artists, new Comparator<String>() {
             @Override
@@ -322,16 +366,19 @@ public class MainActivity extends AppCompatActivity implements AlbumsFragment.On
     }
 
     @Override
-    public void onFragmentInteraction(String message, boolean isAlbum) {
-        if (isAlbum) {
-            currentAlbum = message;
-            CURRENT_TAG = TAG_CURRENT_ALBUM;
-        } else {
-            currentArtist = message;
-            CURRENT_TAG = TAG_CURRENT_ARTIST;
-        }
+    public void onAlbumOpened(String album) {
+        currentAlbum = album;
+        CURRENT_TAG = TAG_CURRENT_ALBUM;
 
-        loadMusicFragment(message);
+        loadMusicFragment(album);
+    }
+
+    @Override
+    public void onArtistOpened(String artist) {
+        currentArtist = artist;
+        CURRENT_TAG = TAG_CURRENT_ARTIST;
+
+        loadMusicFragment(artist);
     }
 
     @Override
@@ -348,10 +395,12 @@ public class MainActivity extends AppCompatActivity implements AlbumsFragment.On
                 currentArtist = null;
                 CURRENT_TAG = TAG_ARTISTS;
                 setToolbarTitle(null);
+                actionBarDrawerToggle.setDrawerIndicatorEnabled(true);
             } else if (currentAlbum != null) {
                 currentAlbum = null;
                 CURRENT_TAG = TAG_ALBUMS;
                 setToolbarTitle(null);
+                actionBarDrawerToggle.setDrawerIndicatorEnabled(true);
             }
 
             super.onBackPressed();
@@ -367,12 +416,20 @@ public class MainActivity extends AppCompatActivity implements AlbumsFragment.On
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        int id = item.getItemId();
-
-        if (id == R.id.action_settings) {
+        if (actionBarDrawerToggle.onOptionsItemSelected(item))
             return true;
-        }
-
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        actionBarDrawerToggle.onConfigurationChanged(newConfig);
+    }
+
+    @Override
+    protected void onPostCreate(Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+        actionBarDrawerToggle.syncState();
     }
 }

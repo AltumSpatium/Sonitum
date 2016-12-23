@@ -24,6 +24,9 @@ public class AudioRepository {
                 + "artist text, "
                 + "title text, "
                 + "genre text, "
+                + "trackNumber text, "
+                + "albumArt text, "
+                + "year text, "
                 + "data text" + ");"
         );
     }
@@ -36,6 +39,9 @@ public class AudioRepository {
         cv.put("artist", audio.getArtist());
         cv.put("title", audio.getTitle());
         cv.put("genre", audio.getGenre());
+        cv.put("trackNumber", audio.getTrackNumber());
+        cv.put("albumArt", audio.getAlbumArt());
+        cv.put("year", audio.getYear());
         cv.put("data", audio.getData());
 
         db.insert("Audio", null, cv);
@@ -64,6 +70,9 @@ public class AudioRepository {
                 int artistColIndex = c.getColumnIndex("artist");
                 int titleColIndex = c.getColumnIndex("title");
                 int genreColIndex = c.getColumnIndex("genre");
+                int trackNumberColIndex = c.getColumnIndex("trackNumber");
+                int albumArtColIndex  = c.getColumnIndex("albumArt");
+                int yearColIndex = c.getColumnIndex("year");
                 int dataColIndex = c.getColumnIndex("data");
 
                 do {
@@ -73,9 +82,12 @@ public class AudioRepository {
                     String artist = c.getString(artistColIndex);
                     String title = c.getString(titleColIndex);
                     String genre = c.getString(genreColIndex);
+                    String trackNumber = c.getString(trackNumberColIndex);
+                    String albumArt = c.getString(albumArtColIndex);
+                    String year = c.getString(yearColIndex);
                     String data = c.getString(dataColIndex);
 
-                    tracks.add(new Audio(id, totalTime, album, artist, title, genre, data));
+                    tracks.add(new Audio(id, totalTime, album, artist, title, genre, trackNumber, albumArt, year, data));
                 } while (c.moveToNext());
             }
 

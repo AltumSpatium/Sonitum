@@ -1,7 +1,6 @@
 package smart.sonitum.Fragments;
 
 import android.content.Context;
-import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
@@ -9,18 +8,13 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.ListView;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import smart.sonitum.Activities.AudioActivity;
 import smart.sonitum.Adapters.ArtistAdapter;
-import smart.sonitum.Adapters.AudioAdapter;
-import smart.sonitum.Data.Audio;
 import smart.sonitum.R;
+import smart.sonitum.Utils.Utils;
 import smart.sonitum.Utils.VerticalSpaceItemDecoration;
 
 public class ArtistsFragment extends Fragment {
@@ -30,7 +24,7 @@ public class ArtistsFragment extends Fragment {
     private ArrayList<String> artists;
     private HashMap<String, ArrayList<String>> artistsAlbums;
 
-    private OnFragmentInteractionListener listener;
+    private OnArtistOpenListener listener;
 
     RecyclerView rvMain;
 
@@ -62,6 +56,7 @@ public class ArtistsFragment extends Fragment {
         rvMain = (RecyclerView) view.findViewById(R.id.rvMain);
         rvMain.setLayoutManager(new LinearLayoutManager(getActivity()));
         rvMain.addItemDecoration(new VerticalSpaceItemDecoration(5));
+        rvMain.setLayoutAnimation(Utils.listAlphaTranslateAnimation(300, 100, false, 0.3f));
 
         ArtistAdapter artistAdapter = new ArtistAdapter(artists, artistsAlbums);
         rvMain.setAdapter(artistAdapter);
@@ -75,24 +70,24 @@ public class ArtistsFragment extends Fragment {
         return view;
     }
 
-    public interface OnFragmentInteractionListener {
-        void onFragmentInteraction(String message, boolean isAlbum);
+    public interface OnArtistOpenListener {
+        void onArtistOpened(String artist);
     }
 
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
-        if (context instanceof OnFragmentInteractionListener) {
-            listener = (OnFragmentInteractionListener) context;
+        if (context instanceof OnArtistOpenListener) {
+            listener = (OnArtistOpenListener) context;
         } else {
             throw new RuntimeException(context.toString()
-                    + " must implement OnFragmentInteractionListener");
+                    + " must implement OnAlbumOpenListener");
         }
     }
 
     public void openArtist(int position) {
         String artist = artists.get(position);
-        listener.onFragmentInteraction(artist, false);
+        listener.onArtistOpened(artist);
     }
 
 }

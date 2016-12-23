@@ -6,28 +6,27 @@ import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 
 import java.util.ArrayList;
 
 import smart.sonitum.Activities.AudioActivity;
-import smart.sonitum.Activities.MainActivity;
 import smart.sonitum.Adapters.AudioAdapter;
 import smart.sonitum.Data.Audio;
 import smart.sonitum.R;
+import smart.sonitum.Utils.Utils;
 import smart.sonitum.Utils.VerticalSpaceItemDecoration;
 
-public class CurrentAlbumFragment extends Fragment {
+public class AudioFragment extends Fragment {
     private static final String ARG_TRACKS = "tracks";
 
     private ArrayList<Audio> tracks;
 
-    public CurrentAlbumFragment() {}
+    public AudioFragment() {}
 
-    public static CurrentAlbumFragment newInstance(ArrayList<Audio> tracks) {
-        CurrentAlbumFragment fragment = new CurrentAlbumFragment();
+    public static AudioFragment newInstance(ArrayList<Audio> tracks) {
+        AudioFragment fragment = new AudioFragment();
         Bundle args = new Bundle();
         args.putParcelableArrayList(ARG_TRACKS, tracks);
         fragment.setArguments(args);
@@ -45,11 +44,12 @@ public class CurrentAlbumFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_current_album, container, false);
+        View view = inflater.inflate(R.layout.fragment_audio, container, false);
 
         RecyclerView rvMain = (RecyclerView) view.findViewById(R.id.rvMain);
         rvMain.setLayoutManager(new LinearLayoutManager(getActivity()));
         rvMain.addItemDecoration(new VerticalSpaceItemDecoration(5));
+        rvMain.setLayoutAnimation(Utils.listAlphaTranslateAnimation(300, 100, false, 0.3f));
 
         AudioAdapter audioAdapter = new AudioAdapter(tracks);
         rvMain.setAdapter(audioAdapter);

@@ -10,12 +10,14 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 
 import smart.sonitum.Adapters.AlbumAdapter;
 import smart.sonitum.Data.Audio;
 import smart.sonitum.R;
 import smart.sonitum.Utils.GridSpacingItemDecoration;
+import smart.sonitum.Utils.Utils;
 
 public class AlbumsFragment extends Fragment {
     private static final String ARG_ALBUM_TITLES = "albumTitles";
@@ -24,7 +26,7 @@ public class AlbumsFragment extends Fragment {
     private ArrayList<String> albumTitles;
     private HashMap<String, ArrayList<Audio>> albums;
 
-    private OnFragmentInteractionListener listener;
+    private OnAlbumOpenListener listener;
 
     RecyclerView rvMain;
 
@@ -56,6 +58,7 @@ public class AlbumsFragment extends Fragment {
         rvMain = (RecyclerView) view.findViewById(R.id.rvMain);
         rvMain.setLayoutManager(new GridLayoutManager(getActivity(), 3));
         rvMain.addItemDecoration(new GridSpacingItemDecoration(3, 40, true));
+        rvMain.setLayoutAnimation(Utils.listAlphaTranslateAnimation(300, 100, false, 0.3f));
 
         AlbumAdapter albumAdapter = new AlbumAdapter(albumTitles, albums);
         rvMain.setAdapter(albumAdapter);
@@ -69,23 +72,23 @@ public class AlbumsFragment extends Fragment {
         return view;
     }
 
-    public interface OnFragmentInteractionListener {
-        void onFragmentInteraction(String message, boolean isAlbum);
+    public interface OnAlbumOpenListener {
+        void onAlbumOpened(String album);
     }
 
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
-        if (context instanceof OnFragmentInteractionListener) {
-            listener = (OnFragmentInteractionListener) context;
+        if (context instanceof OnAlbumOpenListener) {
+            listener = (OnAlbumOpenListener) context;
         } else {
             throw new RuntimeException(context.toString()
-                    + " must implement OnFragmentInteractionListener");
+                    + " must implement OnAlbumOpenListener");
         }
     }
 
     public void openAlbum(int position) {
         String album = albumTitles.get(position);
-        listener.onFragmentInteraction(album, true);
+        listener.onAlbumOpened(album);
     }
 }

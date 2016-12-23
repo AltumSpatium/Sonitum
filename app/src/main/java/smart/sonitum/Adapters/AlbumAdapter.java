@@ -7,6 +7,8 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 
 import smart.sonitum.Data.Audio;
@@ -35,6 +37,14 @@ public class AlbumAdapter extends RecyclerView.Adapter<AlbumAdapter.AlbumViewHol
 
     public AlbumAdapter(ArrayList<String> albumTitles, HashMap<String, ArrayList<Audio>> albums) {
         this.albumTitles = albumTitles;
+        for (ArrayList<Audio> tracks : albums.values()) {
+            Collections.sort(tracks, new Comparator<Audio>() {
+                @Override
+                public int compare(Audio o1, Audio o2) {
+                    return o1.getTrackNumber().toLowerCase().compareTo(o2.getTrackNumber().toLowerCase());
+                }
+            });
+        }
         this.albums = albums;
     }
 
@@ -57,8 +67,8 @@ public class AlbumAdapter extends RecyclerView.Adapter<AlbumAdapter.AlbumViewHol
         String artist = tracks.get(0).getArtist();
         String tracksCount = "Tracks: " + tracks.size();
 
-        if (album.length() > 17) album = album.substring(0, 15) + "...";
-        if (artist.length() > 22) artist = artist.substring(0 , 20) + "...";
+        if (album.length() > 15) album = album.substring(0, 13) + "...";
+        if (artist.length() > 17) artist = artist.substring(0 , 15) + "...";
 
         avh.tvAlbumTitle.setText(album);
         avh.tvAlbumArtist.setText(artist);
