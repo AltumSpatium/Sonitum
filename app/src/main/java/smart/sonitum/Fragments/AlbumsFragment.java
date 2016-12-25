@@ -1,6 +1,7 @@
 package smart.sonitum.Fragments;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.GridLayoutManager;
@@ -10,7 +11,6 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 
 import smart.sonitum.Adapters.AlbumAdapter;
@@ -22,9 +22,11 @@ import smart.sonitum.Utils.Utils;
 public class AlbumsFragment extends Fragment {
     private static final String ARG_ALBUM_TITLES = "albumTitles";
     private static final String ARG_ALBUMS = "albums";
+    private static final String ARG_ALBUM_ARTS = "albumArts";
 
     private ArrayList<String> albumTitles;
     private HashMap<String, ArrayList<Audio>> albums;
+    private HashMap<String, Bitmap> albumArts;
 
     private OnAlbumOpenListener listener;
 
@@ -32,11 +34,12 @@ public class AlbumsFragment extends Fragment {
 
     public AlbumsFragment() {}
 
-    public static AlbumsFragment newInstance(ArrayList<String> albumTitles, HashMap<String, ArrayList<Audio>> albums) {
+    public static AlbumsFragment newInstance(ArrayList<String> albumTitles, HashMap<String, ArrayList<Audio>> albums, HashMap<String, Bitmap> albumArts) {
         AlbumsFragment fragment = new AlbumsFragment();
         Bundle args = new Bundle();
         args.putStringArrayList(ARG_ALBUM_TITLES, albumTitles);
         args.putSerializable(ARG_ALBUMS, albums);
+        args.putSerializable(ARG_ALBUM_ARTS, albumArts);
         fragment.setArguments(args);
         return fragment;
     }
@@ -47,6 +50,7 @@ public class AlbumsFragment extends Fragment {
         if (getArguments() != null) {
             albumTitles = getArguments().getStringArrayList(ARG_ALBUM_TITLES);
             albums = (HashMap<String, ArrayList<Audio>>) getArguments().getSerializable(ARG_ALBUMS);
+            albumArts = (HashMap<String, Bitmap>) getArguments().getSerializable(ARG_ALBUM_ARTS);
         }
     }
 
@@ -60,7 +64,7 @@ public class AlbumsFragment extends Fragment {
         rvMain.addItemDecoration(new GridSpacingItemDecoration(3, 40, true));
         rvMain.setLayoutAnimation(Utils.listAlphaTranslateAnimation(300, 100, false, 0.3f));
 
-        AlbumAdapter albumAdapter = new AlbumAdapter(albumTitles, albums);
+        AlbumAdapter albumAdapter = new AlbumAdapter(albumTitles, albums, albumArts);
         rvMain.setAdapter(albumAdapter);
         albumAdapter.setOnItemClickListener(new AlbumAdapter.OnItemClickListener() {
             @Override

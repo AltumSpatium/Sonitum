@@ -4,6 +4,7 @@ import android.content.ContentResolver;
 import android.content.res.Configuration;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -16,6 +17,7 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -59,6 +61,7 @@ public class MainActivity extends AppCompatActivity implements AlbumsFragment.On
     ArrayList<Audio> tracks = new ArrayList<>();
     HashMap<String, ArrayList<Audio>> albums = new HashMap<>();
     HashMap<String, ArrayList<String>> artistsAlbums = new HashMap<>();
+    HashMap<String, Bitmap> albumArts = new HashMap<>();
 
     DBHelper dbHelper;
 
@@ -71,7 +74,22 @@ public class MainActivity extends AppCompatActivity implements AlbumsFragment.On
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+        dbHelper = new DBHelper(this);
+
+        Runnable fillingRunnable = new Runnable() {
+            @Override
+            public void run() {
+                fillTracks();
+                fillAlbums();
+                fillArtists();
+                navItemIndex = 0;
+                CURRENT_TAG = TAG_MUSIC;
+                loadMusicFragment(null);
+            }
+        };
+
         mHandler = new android.os.Handler();
+        mHandler.post(fillingRunnable);
 
         drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         navigationView = (NavigationView) findViewById(R.id.nav_view);
@@ -79,20 +97,6 @@ public class MainActivity extends AppCompatActivity implements AlbumsFragment.On
         activityTitles = getResources().getStringArray(R.array.activity_titles);
 
         setUpNavigationMenu();
-
-        dbHelper = new DBHelper(this);
-        SQLiteDatabase db = dbHelper.getWritableDatabase();
-        dbHelper.onUpgrade(db, 0, 1);
-
-        if (savedInstanceState == null) {
-            navItemIndex = 0;
-            CURRENT_TAG = TAG_MUSIC;
-            loadMusicFragment(null);
-        }
-
-        fillTracks();
-        fillAlbums();
-        fillArtists();
     }
 
     private void setUpNavigationMenu() {
@@ -153,6 +157,7 @@ public class MainActivity extends AppCompatActivity implements AlbumsFragment.On
             while (back-- > 0) {
                 getSupportFragmentManager().popBackStack();
             }
+            actionBarDrawerToggle.setDrawerIndicatorEnabled(true);
         }
 
         Runnable mPendingRunnable = new Runnable() {
@@ -197,7 +202,7 @@ public class MainActivity extends AppCompatActivity implements AlbumsFragment.On
             actionBarDrawerToggle.setHomeAsUpIndicator(R.drawable.arrow_back);
 
             ArrayList<String> albumTitles = artistsAlbums.get(currentArtist);
-            return AlbumsFragment.newInstance(albumTitles, albums);
+            return AlbumsFragment.newInstance(albumTitles, albums, albumArts);
         }
 
         switch (navItemIndex) {
@@ -205,7 +210,7 @@ public class MainActivity extends AppCompatActivity implements AlbumsFragment.On
                 return AudioFragment.newInstance(tracks);
             case 1:
                 ArrayList<String> albumTitles = getAlbumTitles();
-                return AlbumsFragment.newInstance(albumTitles, albums);
+                return AlbumsFragment.newInstance(albumTitles, albums, albumArts);
             case 2:
                 ArrayList<String> artists = getArtistsAlbums();
                 return ArtistsFragment.newInstance(artists, artistsAlbums);
@@ -214,12 +219,60 @@ public class MainActivity extends AppCompatActivity implements AlbumsFragment.On
         }
     }
 
-    private ArrayList<Audio> loadFromCursor(Cursor c, String place) {
-        ArrayList<Audio> tracks = new ArrayList<>();
+    private String getTrackGenre(int id, String place) {
+        String genre = "";
         String[] genresProjection = {
                 MediaStore.Audio.Genres._ID,
                 MediaStore.Audio.Genres.NAME
         };
+
+        try {
+            Cursor genresCursor = getContentResolver().query(
+                    place.equals("external") ? MediaStore.Audio.Genres.EXTERNAL_CONTENT_URI : MediaStore.Audio.Genres.INTERNAL_CONTENT_URI,
+                    genresProjection,
+                    MediaStore.Audio.Genres._ID + "=?",
+                    new String[]{String.valueOf(id)},
+                    null);
+            if (genresCursor != null) {
+                int genreColIndex = genresCursor.getColumnIndex(MediaStore.Audio.Genres.NAME);
+
+                if (genresCursor.moveToFirst()) {
+                    do {
+                        genre += genresCursor.getString(genreColIndex) + "/";
+                    } while (genresCursor.moveToNext());
+                }
+                if (genre.length() > 0)
+                    genre = genre.substring(0, genre.length() - 1);
+                genresCursor.close();
+            }
+        }
+        catch (RuntimeException e) {
+            genre = "<unknown>";
+        }
+
+        return genre;
+    }
+
+    private String getAlbumArt(int albumId, String place) {
+        String albumArt = "";
+        Cursor cursor = getContentResolver().query(
+                place.equals("external") ? MediaStore.Audio.Albums.EXTERNAL_CONTENT_URI : MediaStore.Audio.Albums.INTERNAL_CONTENT_URI,
+                new String[] {MediaStore.Audio.Albums._ID, MediaStore.Audio.Albums.ALBUM_ART},
+                MediaStore.Audio.Albums._ID + "=?",
+                new String[] {String.valueOf(albumId)},
+                null);
+        if (cursor != null) {
+            if (cursor.moveToFirst()) {
+                albumArt = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Albums.ALBUM_ART));
+            }
+            cursor.close();
+        }
+
+        return albumArt;
+    }
+
+    private ArrayList<Audio> loadFromCursor(Cursor c, String place) {
+        ArrayList<Audio> tracks = new ArrayList<>();
 
         if (c != null) {
             for (int i = 0; i < c.getCount(); i++) {
@@ -227,30 +280,15 @@ public class MainActivity extends AppCompatActivity implements AlbumsFragment.On
 
                 long id = c.getInt(c.getColumnIndex(MediaStore.Audio.Media._ID));
                 int totalTime = c.getInt(c.getColumnIndex(MediaStore.Audio.Media.DURATION));
+                int albumId = c.getInt(c.getColumnIndex(MediaStore.Audio.Media.ALBUM_ID));
                 String album = c.getString(c.getColumnIndex(MediaStore.Audio.Media.ALBUM));
                 String artist = c.getString(c.getColumnIndex(MediaStore.Audio.Media.ARTIST));
                 String title = c.getString(c.getColumnIndex(MediaStore.Audio.Media.TITLE));
-                String genre = "";
+                String genre = getTrackGenre(albumId, place);
                 String trackNumber = c.getString(c.getColumnIndex(MediaStore.Audio.Media.TRACK));
-                String albumArt = "";
+                String albumArt = getAlbumArt(albumId, place);
                 String year = c.getString(c.getColumnIndex(MediaStore.Audio.Media.YEAR));
                 String data = c.getString(c.getColumnIndex(MediaStore.Audio.Media.DATA));
-
-                Uri uri = MediaStore.Audio.Genres.getContentUriForAudioId(place, (int)id);
-                Cursor genresCursor = getContentResolver().query(uri, genresProjection, null, null, null);
-                if (genresCursor != null) {
-                    int genreColIndex = genresCursor.getColumnIndex(MediaStore.Audio.Genres.NAME);
-
-                    if (genresCursor.moveToFirst()) {
-                        do {
-                            genre += genresCursor.getString(genreColIndex) + "/";
-                        } while (genresCursor.moveToNext());
-                    }
-                    genre = genre.substring(0, genre.length() - 2);
-                    genresCursor.close();
-                } else {
-                    genre = "Other";
-                }
 
                 Audio track = new Audio(id, totalTime, album, artist, title, genre, trackNumber, albumArt, year, data);
                 if (!track.getArtist().equals("<unknown>"))
@@ -269,6 +307,7 @@ public class MainActivity extends AppCompatActivity implements AlbumsFragment.On
                 MediaStore.Audio.Media._ID,
                 MediaStore.Audio.Media.DURATION,
                 MediaStore.Audio.Media.ALBUM,
+                MediaStore.Audio.Media.ALBUM_ID,
                 MediaStore.Audio.Media.ARTIST,
                 MediaStore.Audio.Media.TITLE,
                 MediaStore.Audio.Media.TRACK,
@@ -330,8 +369,6 @@ public class MainActivity extends AppCompatActivity implements AlbumsFragment.On
     }
 
     private void fillTracks() {
-        dbHelper = new DBHelper(this);
-
         SQLiteDatabase db = dbHelper.getWritableDatabase();
         AudioRepository audioRepository = new AudioRepository();
         audioRepository.connect(db);
@@ -346,8 +383,10 @@ public class MainActivity extends AppCompatActivity implements AlbumsFragment.On
 
     private void fillAlbums() {
         for (Audio track : tracks) {
-            if (albums.get(track.getAlbum()) == null)
+            if (albums.get(track.getAlbum()) == null) {
                 albums.put(track.getAlbum(), new ArrayList<Audio>());
+                albumArts.put(track.getAlbum(), null);
+            }
             albums.get(track.getAlbum()).add(track);
         }
     }
@@ -409,8 +448,7 @@ public class MainActivity extends AppCompatActivity implements AlbumsFragment.On
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        //set to inflate needed menu for each fragment
-        //getMenuInflater().inflate(R.menu.main, menu);
+        getMenuInflater().inflate(R.menu.main, menu);
         return true;
     }
 
@@ -418,6 +456,13 @@ public class MainActivity extends AppCompatActivity implements AlbumsFragment.On
     public boolean onOptionsItemSelected(MenuItem item) {
         if (actionBarDrawerToggle.onOptionsItemSelected(item))
             return true;
+        switch (item.getItemId()) {
+            case R.id.action_refresh:
+                SQLiteDatabase db = dbHelper.getWritableDatabase();
+                dbHelper.onUpgrade(db, 0, 1);
+                loadMusicFragment(null);
+                actionBarDrawerToggle.setDrawerIndicatorEnabled(true);
+        }
         return super.onOptionsItemSelected(item);
     }
 

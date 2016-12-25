@@ -2,10 +2,8 @@ package smart.sonitum.Activities;
 
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.view.View;
-import android.widget.TimePicker;
 
-import smart.sonitum.*;
+import smart.sonitum.R;
 
 public class AudioActivity extends AppCompatActivity {
     @Override

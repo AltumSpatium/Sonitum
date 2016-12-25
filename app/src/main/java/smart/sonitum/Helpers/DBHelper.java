@@ -5,8 +5,11 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
 public class DBHelper extends SQLiteOpenHelper {
+    private static final String DB_NAME = "SonitumDB";
+    private static final String TABLE_AUDIO_NAME = "Audio";
+
     public DBHelper(Context ctx) {
-        super(ctx, "SonitumDB", null, 1);
+        super(ctx, DB_NAME, null, 1);
     }
 
     @Override
@@ -18,7 +21,7 @@ public class DBHelper extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        db.execSQL("drop table if exists Audio");
+        db.execSQL("drop table if exists " + TABLE_AUDIO_NAME);
         onCreate(db);
     }
 }
