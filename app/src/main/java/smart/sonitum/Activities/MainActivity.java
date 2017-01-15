@@ -1,11 +1,14 @@
 package smart.sonitum.Activities;
 
+import android.app.ProgressDialog;
 import android.content.ContentResolver;
+import android.content.Context;
 import android.content.res.Configuration;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
@@ -29,6 +32,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 
 import smart.sonitum.Data.Audio;
+import smart.sonitum.Data.Playlist;
 import smart.sonitum.Fragments.AlbumsFragment;
 import smart.sonitum.Fragments.ArtistsFragment;
 import smart.sonitum.Fragments.AudioFragment;
@@ -48,6 +52,7 @@ public class MainActivity extends AppCompatActivity implements AlbumsFragment.On
     private static final String TAG_MUSIC = "music";
     private static final String TAG_ALBUMS = "albums";
     private static final String TAG_ARTISTS = "artists";
+    private static final String TAG_PLAYLISTS = "playlists";
     private static final String TAG_CURRENT_ALBUM = "current_album";
     private static final String TAG_CURRENT_ARTIST = "current_artist";
     public static String CURRENT_TAG = TAG_MUSIC;
@@ -62,10 +67,12 @@ public class MainActivity extends AppCompatActivity implements AlbumsFragment.On
     HashMap<String, ArrayList<Audio>> albums = new HashMap<>();
     HashMap<String, ArrayList<String>> artistsAlbums = new HashMap<>();
     HashMap<String, Bitmap> albumArts = new HashMap<>();
+    ArrayList<Playlist> playlists = new ArrayList<>();
 
     DBHelper dbHelper;
 
     private android.os.Handler mHandler;
+    private AudioFillTask task;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,20 +83,7 @@ public class MainActivity extends AppCompatActivity implements AlbumsFragment.On
 
         dbHelper = new DBHelper(this);
 
-        Runnable fillingRunnable = new Runnable() {
-            @Override
-            public void run() {
-                fillTracks();
-                fillAlbums();
-                fillArtists();
-                navItemIndex = 0;
-                CURRENT_TAG = TAG_MUSIC;
-                loadMusicFragment(null);
-            }
-        };
-
         mHandler = new android.os.Handler();
-        mHandler.post(fillingRunnable);
 
         drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         navigationView = (NavigationView) findViewById(R.id.nav_view);
@@ -97,6 +91,13 @@ public class MainActivity extends AppCompatActivity implements AlbumsFragment.On
         activityTitles = getResources().getStringArray(R.array.activity_titles);
 
         setUpNavigationMenu();
+
+        task = new AudioFillTask(this);
+        task.execute();
+
+        navItemIndex = 0;
+        CURRENT_TAG = TAG_MUSIC;
+        loadMusicFragment(null);
     }
 
     private void setUpNavigationMenu() {
@@ -115,6 +116,10 @@ public class MainActivity extends AppCompatActivity implements AlbumsFragment.On
                     case R.id.nav_artists:
                         navItemIndex = 2;
                         CURRENT_TAG = TAG_ARTISTS;
+                        break;
+                    case R.id.nav_playlists:
+                        navItemIndex = 3;
+                        CURRENT_TAG = TAG_PLAYLISTS;
                         break;
                     case R.id.nav_settings:
                         //starting settings activity
@@ -214,125 +219,11 @@ public class MainActivity extends AppCompatActivity implements AlbumsFragment.On
             case 2:
                 ArrayList<String> artists = getArtistsAlbums();
                 return ArtistsFragment.newInstance(artists, artistsAlbums);
+            case 3:
+                return null;
             default:
                 return AudioFragment.newInstance(tracks);
         }
-    }
-
-    private String getTrackGenre(int id, String place) {
-        String genre = "";
-        String[] genresProjection = {
-                MediaStore.Audio.Genres._ID,
-                MediaStore.Audio.Genres.NAME
-        };
-
-        try {
-            Cursor genresCursor = getContentResolver().query(
-                    place.equals("external") ? MediaStore.Audio.Genres.EXTERNAL_CONTENT_URI : MediaStore.Audio.Genres.INTERNAL_CONTENT_URI,
-                    genresProjection,
-                    MediaStore.Audio.Genres._ID + "=?",
-                    new String[]{String.valueOf(id)},
-                    null);
-            if (genresCursor != null) {
-                int genreColIndex = genresCursor.getColumnIndex(MediaStore.Audio.Genres.NAME);
-
-                if (genresCursor.moveToFirst()) {
-                    do {
-                        genre += genresCursor.getString(genreColIndex) + "/";
-                    } while (genresCursor.moveToNext());
-                }
-                if (genre.length() > 0)
-                    genre = genre.substring(0, genre.length() - 1);
-                genresCursor.close();
-            }
-        }
-        catch (RuntimeException e) {
-            genre = "<unknown>";
-        }
-
-        return genre;
-    }
-
-    private String getAlbumArt(int albumId, String place) {
-        String albumArt = "";
-        Cursor cursor = getContentResolver().query(
-                place.equals("external") ? MediaStore.Audio.Albums.EXTERNAL_CONTENT_URI : MediaStore.Audio.Albums.INTERNAL_CONTENT_URI,
-                new String[] {MediaStore.Audio.Albums._ID, MediaStore.Audio.Albums.ALBUM_ART},
-                MediaStore.Audio.Albums._ID + "=?",
-                new String[] {String.valueOf(albumId)},
-                null);
-        if (cursor != null) {
-            if (cursor.moveToFirst()) {
-                albumArt = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Albums.ALBUM_ART));
-            }
-            cursor.close();
-        }
-
-        return albumArt;
-    }
-
-    private ArrayList<Audio> loadFromCursor(Cursor c, String place) {
-        ArrayList<Audio> tracks = new ArrayList<>();
-
-        if (c != null) {
-            for (int i = 0; i < c.getCount(); i++) {
-                c.moveToPosition(i);
-
-                long id = c.getInt(c.getColumnIndex(MediaStore.Audio.Media._ID));
-                int totalTime = c.getInt(c.getColumnIndex(MediaStore.Audio.Media.DURATION));
-                int albumId = c.getInt(c.getColumnIndex(MediaStore.Audio.Media.ALBUM_ID));
-                String album = c.getString(c.getColumnIndex(MediaStore.Audio.Media.ALBUM));
-                String artist = c.getString(c.getColumnIndex(MediaStore.Audio.Media.ARTIST));
-                String title = c.getString(c.getColumnIndex(MediaStore.Audio.Media.TITLE));
-                String genre = getTrackGenre(albumId, place);
-                String trackNumber = c.getString(c.getColumnIndex(MediaStore.Audio.Media.TRACK));
-                String albumArt = getAlbumArt(albumId, place);
-                String year = c.getString(c.getColumnIndex(MediaStore.Audio.Media.YEAR));
-                String data = c.getString(c.getColumnIndex(MediaStore.Audio.Media.DATA));
-
-                Audio track = new Audio(id, totalTime, album, artist, title, genre, trackNumber, albumArt, year, data);
-                if (!track.getArtist().equals("<unknown>"))
-                    tracks.add(track);
-            }
-            c.close();
-        }
-
-        return tracks;
-    }
-
-    public ArrayList<Audio> findTracks() {
-        ArrayList<Audio> tracks;
-
-        String[] projection = {
-                MediaStore.Audio.Media._ID,
-                MediaStore.Audio.Media.DURATION,
-                MediaStore.Audio.Media.ALBUM,
-                MediaStore.Audio.Media.ALBUM_ID,
-                MediaStore.Audio.Media.ARTIST,
-                MediaStore.Audio.Media.TITLE,
-                MediaStore.Audio.Media.TRACK,
-                MediaStore.Audio.Media.YEAR,
-                MediaStore.Audio.Media.DATA
-        };
-
-        Uri uriExternal = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
-        Uri uriInternal = MediaStore.Audio.Media.INTERNAL_CONTENT_URI;
-
-        ContentResolver contentResolver = getContentResolver();
-
-        Cursor cursorExt = contentResolver.query(uriExternal, projection, null, null, null);
-        Cursor cursorInt = contentResolver.query(uriInternal, projection, null, null, null);
-
-        tracks = loadFromCursor(cursorExt, "external");
-        tracks.addAll(loadFromCursor(cursorInt, "internal"));
-        Collections.sort(tracks, new Comparator<Audio>() {
-            @Override
-            public int compare(Audio o1, Audio o2) {
-                return o1.getTitle().toLowerCase().compareTo(o2.getTitle().toLowerCase());
-            }
-        });
-
-        return tracks;
     }
 
     private ArrayList<String> getAlbumTitles() {
@@ -402,6 +293,122 @@ public class MainActivity extends AppCompatActivity implements AlbumsFragment.On
                 artistsAlbums.get(track.getArtist()).add(track.getAlbum());
             }
         }
+    }
+
+    private ArrayList<Audio> findTracks() {
+        ArrayList<Audio> tracks;
+
+        String[] projection = {
+                MediaStore.Audio.Media._ID,
+                MediaStore.Audio.Media.DURATION,
+                MediaStore.Audio.Media.ALBUM,
+                MediaStore.Audio.Media.ALBUM_ID,
+                MediaStore.Audio.Media.ARTIST,
+                MediaStore.Audio.Media.TITLE,
+                MediaStore.Audio.Media.TRACK,
+                MediaStore.Audio.Media.YEAR,
+                MediaStore.Audio.Media.DATA
+        };
+
+        Uri uriExternal = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
+        Uri uriInternal = MediaStore.Audio.Media.INTERNAL_CONTENT_URI;
+
+        ContentResolver contentResolver = getContentResolver();
+
+        Cursor cursorExt = contentResolver.query(uriExternal, projection, null, null, null);
+        Cursor cursorInt = contentResolver.query(uriInternal, projection, null, null, null);
+
+        tracks = loadFromCursor(cursorExt, "external");
+        tracks.addAll(loadFromCursor(cursorInt, "internal"));
+        Collections.sort(tracks, new Comparator<Audio>() {
+            @Override
+            public int compare(Audio o1, Audio o2) {
+                return o1.getTitle().toLowerCase().compareTo(o2.getTitle().toLowerCase());
+            }
+        });
+
+        return tracks;
+    }
+
+    private ArrayList<Audio> loadFromCursor(Cursor c, String place) {
+        ArrayList<Audio> tracks = new ArrayList<>();
+
+        if (c != null) {
+            for (int i = 0; i < c.getCount(); i++) {
+                c.moveToPosition(i);
+
+                long id = c.getInt(c.getColumnIndex(MediaStore.Audio.Media._ID));
+                int totalTime = c.getInt(c.getColumnIndex(MediaStore.Audio.Media.DURATION));
+                int albumId = c.getInt(c.getColumnIndex(MediaStore.Audio.Media.ALBUM_ID));
+                String album = c.getString(c.getColumnIndex(MediaStore.Audio.Media.ALBUM));
+                String artist = c.getString(c.getColumnIndex(MediaStore.Audio.Media.ARTIST));
+                String title = c.getString(c.getColumnIndex(MediaStore.Audio.Media.TITLE));
+                String genre = getTrackGenre(albumId, place);
+                String trackNumber = c.getString(c.getColumnIndex(MediaStore.Audio.Media.TRACK));
+                String albumArt = getAlbumArt(albumId, place);
+                String year = c.getString(c.getColumnIndex(MediaStore.Audio.Media.YEAR));
+                String data = c.getString(c.getColumnIndex(MediaStore.Audio.Media.DATA));
+
+                Audio track = new Audio(id, totalTime, album, artist, title, genre, trackNumber, albumArt, year, data);
+                if (!track.getArtist().equals("<unknown>"))
+                    tracks.add(track);
+            }
+            c.close();
+        }
+
+        return tracks;
+    }
+
+    private String getTrackGenre(int id, String place) {
+        String genre = "";
+        String[] genresProjection = {
+                MediaStore.Audio.Genres._ID,
+                MediaStore.Audio.Genres.NAME
+        };
+
+        try {
+            Cursor genresCursor = getContentResolver().query(
+                    place.equals("external") ? MediaStore.Audio.Genres.EXTERNAL_CONTENT_URI : MediaStore.Audio.Genres.INTERNAL_CONTENT_URI,
+                    genresProjection,
+                    MediaStore.Audio.Genres._ID + "=?",
+                    new String[]{String.valueOf(id)},
+                    null);
+            if (genresCursor != null) {
+                int genreColIndex = genresCursor.getColumnIndex(MediaStore.Audio.Genres.NAME);
+
+                if (genresCursor.moveToFirst()) {
+                    do {
+                        genre += genresCursor.getString(genreColIndex) + "/";
+                    } while (genresCursor.moveToNext());
+                }
+                if (genre.length() > 0)
+                    genre = genre.substring(0, genre.length() - 1);
+                genresCursor.close();
+            }
+        }
+        catch (RuntimeException e) {
+            genre = "<unknown>";
+        }
+
+        return genre;
+    }
+
+    private String getAlbumArt(int albumId, String place) {
+        String albumArt = "";
+        Cursor cursor = getContentResolver().query(
+                place.equals("external") ? MediaStore.Audio.Albums.EXTERNAL_CONTENT_URI : MediaStore.Audio.Albums.INTERNAL_CONTENT_URI,
+                new String[] {MediaStore.Audio.Albums._ID, MediaStore.Audio.Albums.ALBUM_ART},
+                MediaStore.Audio.Albums._ID + "=?",
+                new String[] {String.valueOf(albumId)},
+                null);
+        if (cursor != null) {
+            if (cursor.moveToFirst()) {
+                albumArt = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Albums.ALBUM_ART));
+            }
+            cursor.close();
+        }
+
+        return albumArt;
     }
 
     @Override
@@ -476,5 +483,50 @@ public class MainActivity extends AppCompatActivity implements AlbumsFragment.On
     protected void onPostCreate(Bundle savedInstanceState) {
         super.onPostCreate(savedInstanceState);
         actionBarDrawerToggle.syncState();
+    }
+
+    private class AudioFillTask extends AsyncTask<Void, Void, Void> {
+        private Context ctx;
+        private ProgressDialog progressDialog;
+
+        AudioFillTask(Context ctx) {
+            this.ctx = ctx;
+            progressDialog = new ProgressDialog(this.ctx);
+            progressDialog.setMessage("Searching audio...");
+            progressDialog.setCancelable(false);
+        }
+
+        @Override
+        protected void onPreExecute() {
+            progressDialog.show();
+        }
+
+        @Override
+        protected Void doInBackground(Void... params) {
+            fillTracks();
+            fillAlbums();
+            fillArtists();
+            try {
+                synchronized (this) {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            loadMusicFragment(null);
+                        }
+                    });
+                }
+            }
+            catch (Exception e) {
+                e.printStackTrace();
+            }
+
+
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void result) {
+            if (progressDialog.isShowing()) progressDialog.dismiss();
+        }
     }
 }

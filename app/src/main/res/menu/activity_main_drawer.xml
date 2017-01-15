@@ -15,6 +15,10 @@
             android:icon="@mipmap/ic_artist"
             android:title="@string/nav_artists" />
         <item
+            android:id="@+id/nav_playlists"
+            android:icon="@drawable/ic_menu_slideshow"
+            android:title="@string/nav_playlists"/>
+        <item
             android:id="@+id/nav_settings"
             android:icon="@drawable/ic_menu_manage"
             android:title="@string/nav_settings" />

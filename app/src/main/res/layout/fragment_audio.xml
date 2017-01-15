@@ -7,6 +7,8 @@
     <android.support.v7.widget.RecyclerView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:scrollbars="vertical"
+        style="@style/recyclerview_scrollbar_style"
         android:id="@+id/rvMain">
     </android.support.v7.widget.RecyclerView>
     <LinearLayout

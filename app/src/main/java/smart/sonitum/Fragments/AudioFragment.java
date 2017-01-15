@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import smart.sonitum.Activities.AudioActivity;
 import smart.sonitum.Adapters.AudioAdapter;
 import smart.sonitum.Data.Audio;
+import smart.sonitum.Data.Playlist;
 import smart.sonitum.R;
 import smart.sonitum.Utils.Utils;
 import smart.sonitum.Utils.VerticalSpaceItemDecoration;
@@ -57,7 +58,8 @@ public class AudioFragment extends Fragment {
             @Override
             public void OnItemClicked(View view, int position) {
                 Intent intent = new Intent(getActivity(), AudioActivity.class);
-                intent.putExtra("track", tracks.get(position));
+                intent.putExtra("playlist", new Playlist(tracks.get(position).getAlbum(), tracks));
+                intent.putExtra("position", position);
                 startActivity(intent);
                 getActivity().overridePendingTransition(R.anim.pull_in_right, R.anim.push_out_left);
             }

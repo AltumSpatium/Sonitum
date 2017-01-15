@@ -7,6 +7,12 @@ import android.view.animation.LayoutAnimationController;
 import android.view.animation.TranslateAnimation;
 
 public class Utils {
+    public enum PlayMode {
+        LOOP,
+        LIST,
+        SINGLE,
+        SHUFFLE;
+    }
     public static LayoutAnimationController listAlphaTranslateAnimation(int alphaDuration, int translateDuration, boolean fromLeft, float animationDelay) {
         AnimationSet animationSet = new AnimationSet(true);
 
