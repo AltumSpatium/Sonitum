@@ -58,7 +58,7 @@ public class AudioFragment extends Fragment {
             @Override
             public void OnItemClicked(View view, int position) {
                 Intent intent = new Intent(getActivity(), AudioActivity.class);
-                intent.putExtra("playlist", new Playlist(tracks.get(position).getAlbum(), tracks));
+                intent.putExtra("queue", tracks);
                 intent.putExtra("position", position);
                 startActivity(intent);
                 getActivity().overridePendingTransition(R.anim.pull_in_right, R.anim.push_out_left);

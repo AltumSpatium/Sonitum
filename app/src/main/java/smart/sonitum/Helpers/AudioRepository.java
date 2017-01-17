@@ -3,12 +3,18 @@ package smart.sonitum.Helpers;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.util.Log;
 
 import java.util.ArrayList;
 
 import smart.sonitum.Data.Audio;
+import smart.sonitum.Data.Playlist;
 
 public class AudioRepository {
+    private static final String TABLE_AUDIO_NAME = "Audio";
+    private static final String TABLE_PLAYLISTS_NAME = "Playlists";
+    private static final String TABLE_PLAYLIST_TRACKS = "PlaylistTracks";
+
     private SQLiteDatabase db;
 
     public void connect(SQLiteDatabase db) {
@@ -17,7 +23,7 @@ public class AudioRepository {
 
     public void create() {
         db.execSQL(
-                "create table if not exists Audio ("
+                "create table if not exists " + TABLE_AUDIO_NAME + " ("
                 + "id integer primary key autoincrement, "
                 + "totalTime integer, "
                 + "album text, "
@@ -28,6 +34,20 @@ public class AudioRepository {
                 + "albumArt text, "
                 + "year text, "
                 + "data text" + ");"
+        );
+    }
+
+    public void createPlaylists() {
+        db.execSQL(
+                "create table if not exists " + TABLE_PLAYLISTS_NAME + " ("
+                + "id integer primary key autoincrement, "
+                + "name text" + ");"
+        );
+
+        db.execSQL(
+                "create table if not exists " + TABLE_PLAYLIST_TRACKS + " ("
+                        + "playlist_id integer not null, "
+                        + "track_id integer not null" + ");"
         );
     }
 
@@ -44,22 +64,43 @@ public class AudioRepository {
         cv.put("year", audio.getYear());
         cv.put("data", audio.getData());
 
-        db.insert("Audio", null, cv);
+        db.insert(TABLE_AUDIO_NAME, null, cv);
     }
 
-    public void deleteAudio(String title) {
-        db.delete("Audio", "title = '" + title + "'", null);
+    public void addPlaylist(Playlist playlist) {
+        ContentValues cv = new ContentValues();
+
+        cv.put("name", playlist.getName());
+
+        long id = db.insert(TABLE_PLAYLISTS_NAME, null, cv);
+
+        for (Audio track : playlist.getTracks()) {
+            cv = new ContentValues();
+            cv.put("playlist_id", id);
+            cv.put("track_id", track.getId());
+            db.insert(TABLE_PLAYLIST_TRACKS, null, cv);
+        }
+    }
+
+    public void deleteAudio(Audio track) {
+        db.delete(TABLE_AUDIO_NAME, "id = ? and title = ?",
+                new String[] { Long.toString(track.getId()), track.getTitle() });
     }
 
     public void deleteAlbum(String album) {
-        db.delete("Audio", "album = '" + album + "'", null);
+        db.delete(TABLE_AUDIO_NAME, "album = ?", new String[] { album });
     }
 
     public void deleteArtist(String artist) {
-        db.delete("Audio", "artist = '" + artist + "'", null);
+        db.delete("Audio", "artist = ?", new String[] { artist });
     }
 
-    private ArrayList<Audio> loadDataFromCursor(Cursor c) {
+    public void deletePlaylist(Playlist playlist) {
+        db.delete(TABLE_PLAYLISTS_NAME, "id = ? and name = ?",
+                new String[] { Long.toString(playlist.getId()), playlist.getName() });
+    }
+
+    private ArrayList<Audio> loadTracksFromCursor(Cursor c) {
         ArrayList<Audio> tracks = new ArrayList<>();
 
         if (c != null) {
@@ -76,7 +117,7 @@ public class AudioRepository {
                 int dataColIndex = c.getColumnIndex("data");
 
                 do {
-                    long id = c.getInt(idColIndex);
+                    long id = c.getLong(idColIndex);
                     int totalTime = c.getInt(totalTimeColIndex);
                     String album = c.getString(albumColIndex);
                     String artist = c.getString(artistColIndex);
@@ -97,30 +138,79 @@ public class AudioRepository {
         return tracks;
     }
 
+    private Playlist loadPlaylistFromCursor(Cursor c, int position) {
+        Playlist playlist = new Playlist("", new ArrayList<Audio>());
+
+        if (c != null) {
+            if (c.moveToPosition(position)) {
+                int idColIndex = c.getColumnIndex("id");
+                int nameColIndex = c.getColumnIndex("name");
+
+                long id = c.getLong(idColIndex);
+                String name = c.getString(nameColIndex);
+
+                playlist.setId(id);
+                playlist.setName(name);
+                Cursor cursor = db.rawQuery("select * from Audio, PlaylistTracks where PlaylistTracks.playlist_id = ?"
+                        + " and PlaylistTracks.track_id = Audio.id;", new String[] { Long.toString(id) });
+                playlist.setTracks(loadTracksFromCursor(cursor));
+            }
+        }
+
+        return playlist;
+    }
+
     public ArrayList<Audio> loadAll() {
-        Cursor c = db.query("Audio", null, null, null, null, null, null);
-        return loadDataFromCursor(c);
+        Cursor c = db.query(TABLE_AUDIO_NAME, null, null, null, null, null, null);
+        return loadTracksFromCursor(c);
+    }
+
+    public ArrayList<Playlist> loadPlaylists() {
+        ArrayList<Playlist> playlists = new ArrayList<>();
+        Cursor c = db.query(TABLE_PLAYLISTS_NAME, null, null, null, null, null, null);
+        for (int i = 0; i < c.getCount(); i++) {
+            playlists.add(loadPlaylistFromCursor(c, i));
+        }
+        c.close();
+
+        return playlists;
     }
 
     public ArrayList<Audio> loadAlbum(String album) {
         String selection = "album = ?";
         String[] selectionArgs = new String[] { album };
-        Cursor c = db.query("Audio", null, selection, selectionArgs, null, null, null);
-        return loadDataFromCursor(c);
+        Cursor c = db.query(TABLE_AUDIO_NAME, null, selection, selectionArgs, null, null, null);
+        return loadTracksFromCursor(c);
     }
 
     public ArrayList<Audio> loadArtist(String artist) {
         String selection = "artist = ?";
         String[] selectionArgs = new String[] { artist };
-        Cursor c = db.query("Audio", null, selection, selectionArgs, null, null, null);
-        return loadDataFromCursor(c);
+        Cursor c = db.query(TABLE_AUDIO_NAME, null, selection, selectionArgs, null, null, null);
+        return loadTracksFromCursor(c);
+    }
+
+    public Playlist loadPlaylist(String name) {
+        String selection = "name = ?";
+        String[] selectionArgs = new String[] { name };
+        Cursor c = db.query(TABLE_PLAYLISTS_NAME, null, selection, selectionArgs, null, null, null);
+        Playlist playlist = loadPlaylistFromCursor(c, 0);
+        c.close();
+        return playlist;
     }
 
     public void saveAll(ArrayList<Audio> tracks) {
-        db.delete("Audio", null, null);
+        db.delete(TABLE_AUDIO_NAME, null, null);
 
         for (Audio track : tracks)
             add(track);
+    }
+
+    public void savePlaylists(ArrayList<Playlist> playlists) {
+        db.delete(TABLE_PLAYLISTS_NAME, null, null);
+
+        for (Playlist playlist : playlists)
+            addPlaylist(playlist);
     }
 
     public void saveAlbum(ArrayList<Audio> tracksAlbum, String album) {

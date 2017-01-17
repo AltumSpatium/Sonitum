@@ -2,7 +2,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="smart.sonitum.Fragments.ArtistsFragment"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    tools:context="smart.sonitum.Fragments.AudioFragment"
     android:background="@color/colorDrawerBg">
     <android.support.v7.widget.RecyclerView
         android:layout_width="match_parent"
@@ -11,4 +12,14 @@
         style="@style/recyclerview_scrollbar_style"
         android:id="@+id/rvMain">
     </android.support.v7.widget.RecyclerView>
+    <android.support.design.widget.FloatingActionButton
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentEnd="true"
+        app:backgroundTint="@color/colorNavBg"
+        android:src="@drawable/ic_add_white"
+        android:layout_margin="16dp"
+        android:clickable="true"
+        android:id="@+id/fabAddPlaylist"/>
 </RelativeLayout>

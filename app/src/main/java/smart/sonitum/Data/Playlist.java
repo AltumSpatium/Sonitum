@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import smart.sonitum.Utils.Utils.PlayMode;
 
 public class Playlist implements Parcelable {
-    private int id;
+    private long id;
     private int totalTime;
     private int tracksCount;
     private String name;
@@ -26,7 +26,7 @@ public class Playlist implements Parcelable {
     }
 
     private Playlist(Parcel in) {
-        id = in.readInt();
+        id = in.readLong();
         totalTime = in.readInt();
         tracksCount = in.readInt();
         name = in.readString();
@@ -45,11 +45,11 @@ public class Playlist implements Parcelable {
         }
     };
 
-    public int getId() {
+    public long getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(long id) {
         this.id = id;
     }
 
@@ -75,6 +75,10 @@ public class Playlist implements Parcelable {
 
     public void setTracks(ArrayList<Audio> tracks) {
         this.tracks = tracks;
+        for (Audio track : tracks) {
+            totalTime += track.getTotalTime();
+        }
+        tracksCount = tracks.size();
     }
 
     public PlayMode getPlayMode() {
@@ -92,7 +96,7 @@ public class Playlist implements Parcelable {
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
-        dest.writeInt(id);
+        dest.writeLong(id);
         dest.writeInt(totalTime);
         dest.writeInt(tracksCount);
         dest.writeString(name);

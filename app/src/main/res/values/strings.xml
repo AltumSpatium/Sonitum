@@ -17,6 +17,11 @@
         <item>All music</item>
         <item>Albums</item>
         <item>Artists</item>
+        <item>Playlists</item>
         <item>Settings</item>
     </string-array>
+
+    <string name="new_dialog_placeholder">Enter playlist name</string>
+    <string name="new_dialog_create_btn">Create</string>
+    <string name="new_dialog_cancel_btn">Cancel</string>
 </resources>
