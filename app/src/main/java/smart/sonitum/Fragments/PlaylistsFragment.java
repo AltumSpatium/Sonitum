@@ -1,6 +1,7 @@
 package smart.sonitum.Fragments;
 
 import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
@@ -57,7 +58,7 @@ public class PlaylistsFragment extends Fragment implements NewPlaylistDialog.Pla
         FloatingActionButton fabAddPlaylist = (FloatingActionButton) view.findViewById(R.id.fabAddPlaylist);
         ArrayList<Audio> tracks = ((MainActivity)getActivity()).tracks;
         final NewPlaylistDialog dialog = NewPlaylistDialog.newInstance(tracks);
-        dialog.setTargetFragment(this, 0);
+        //dialog.setTargetFragment(this, 0);
         fabAddPlaylist.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -106,9 +107,12 @@ public class PlaylistsFragment extends Fragment implements NewPlaylistDialog.Pla
     public void playlistCreated(String name, ArrayList<Audio> selectedTracks, boolean cancelled) {
         if (!cancelled) {
             Playlist newPlaylist = new Playlist(name, selectedTracks);
-            DBHelper dbHelper = new DBHelper(getActivity());
+            Context ctx2 = getFragmentManager().findFragmentByTag("playlists").getActivity();
+            DBHelper dbHelper = new DBHelper(ctx2);
             AudioRepository audioRepository = new AudioRepository();
-            audioRepository.connect(dbHelper.getWritableDatabase());
+            SQLiteDatabase db = dbHelper.getWritableDatabase();
+
+            audioRepository.connect(db);
             audioRepository.addPlaylist(newPlaylist);
             playlists.add(newPlaylist);
             playlistAdapter.notifyDataSetChanged();

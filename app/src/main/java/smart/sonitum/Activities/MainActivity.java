@@ -97,15 +97,19 @@ public class MainActivity extends AppCompatActivity implements AlbumsFragment.On
         AudioFillTask task = new AudioFillTask(this);
         task.execute();
 
-        navItemIndex = 0;
-        CURRENT_TAG = TAG_MUSIC;
+        if (savedInstanceState != null) {
+            navItemIndex = savedInstanceState.getInt("navItemIndex");
+            CURRENT_TAG = savedInstanceState.getString("current_fragment");
+        }
+
         loadMusicFragment(null);
     }
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-
+        outState.putInt("navItemIndex", navItemIndex);
+        outState.putString("current_fragment", CURRENT_TAG);
     }
 
     private void setUpNavigationMenu() {

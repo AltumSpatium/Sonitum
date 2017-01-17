@@ -25,6 +25,9 @@ public class NewPlaylistDialog extends DialogFragment {
 
     private ArrayList<Audio> tracks;
 
+    private NewPlaylistDialogAdapter adapter;
+    private EditText etPlaylistName;
+
     private PlaylistCreateListener listener;
 
     public static NewPlaylistDialog newInstance(ArrayList<Audio> tracks) {
@@ -41,7 +44,7 @@ public class NewPlaylistDialog extends DialogFragment {
         if (getArguments() != null) {
             tracks = getArguments().getParcelableArrayList(ARG_TRACKS);
         }
-        listener = (PlaylistCreateListener) getTargetFragment();
+        listener = (PlaylistCreateListener) getFragmentManager().findFragmentByTag("playlists");
     }
 
     @Override
@@ -54,10 +57,14 @@ public class NewPlaylistDialog extends DialogFragment {
         rvPlaylistTracks.addItemDecoration(new VerticalSpaceItemDecoration(5));
         rvPlaylistTracks.setLayoutAnimation(Utils.listAlphaTranslateAnimation(300, 100, false, 0.3f));
 
-        final NewPlaylistDialogAdapter adapter = new NewPlaylistDialogAdapter(tracks);
+
+        ArrayList<Integer> selectedTracks = savedInstanceState == null ? null :
+                (ArrayList<Integer>) savedInstanceState.getSerializable("selectedTracks");
+        adapter = new NewPlaylistDialogAdapter(tracks, selectedTracks);
         rvPlaylistTracks.setAdapter(adapter);
 
-        final EditText etPlaylistName = (EditText) v.findViewById(R.id.etPlaylistName);
+        etPlaylistName = (EditText) v.findViewById(R.id.etPlaylistName);
+        if (savedInstanceState != null) etPlaylistName.setText(savedInstanceState.getString("name"));
 
         Button btnCancelPlaylist = (Button) v.findViewById(R.id.btnCancelPlaylist);
         btnCancelPlaylist.setOnClickListener(new View.OnClickListener() {
@@ -95,6 +102,15 @@ public class NewPlaylistDialog extends DialogFragment {
         });
 
         return v;
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        String name = etPlaylistName.getText().toString();
+        outState.putString("name", name);
+        ArrayList<Integer> selectedTracks = adapter.getSelected();
+        outState.putSerializable("selectedTracks", selectedTracks);
     }
 
     public interface PlaylistCreateListener {

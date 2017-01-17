@@ -29,10 +29,15 @@ public class NewPlaylistDialogAdapter extends RecyclerView.Adapter<AudioAdapter.
     private ArrayList<Audio> tracks;
     private ArrayList<TrackSelectModel> trackSelectModels = new ArrayList<>();
 
-    public NewPlaylistDialogAdapter(ArrayList<Audio> tracks) {
+    public NewPlaylistDialogAdapter(ArrayList<Audio> tracks, ArrayList<Integer> selectedTracks) {
         this.tracks = tracks;
         for (int i = 0; i < tracks.size(); i++) {
-            trackSelectModels.add(new TrackSelectModel());
+            TrackSelectModel trackSelectModel = new TrackSelectModel();
+            if (selectedTracks != null) {
+                if (selectedTracks.contains(i))
+                    trackSelectModel.setSelected(true);
+            }
+            trackSelectModels.add(trackSelectModel);
         }
     }
 
