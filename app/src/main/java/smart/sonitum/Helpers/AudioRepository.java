@@ -3,7 +3,6 @@ package smart.sonitum.Helpers;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.util.Log;
 
 import java.util.ArrayList;
 
@@ -46,8 +45,8 @@ public class AudioRepository {
 
         db.execSQL(
                 "create table if not exists " + TABLE_PLAYLIST_TRACKS + " ("
-                        + "playlist_id integer not null, "
-                        + "track_id integer not null" + ");"
+                + "playlist_id integer not null, "
+                + "track_id integer not null" + ");"
         );
     }
 

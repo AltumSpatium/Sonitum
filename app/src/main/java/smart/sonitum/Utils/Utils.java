@@ -6,13 +6,17 @@ import android.view.animation.AnimationSet;
 import android.view.animation.LayoutAnimationController;
 import android.view.animation.TranslateAnimation;
 
+import java.util.Locale;
+import java.util.concurrent.TimeUnit;
+
 public class Utils {
     public enum PlayMode {
         LOOP,
         LIST,
         SINGLE,
-        SHUFFLE;
+        SHUFFLE
     }
+
     public static LayoutAnimationController listAlphaTranslateAnimation(int alphaDuration, int translateDuration, boolean fromLeft, float animationDelay) {
         AnimationSet animationSet = new AnimationSet(true);
 
@@ -26,5 +30,12 @@ public class Utils {
         animationSet.addAnimation(animation);
 
         return new LayoutAnimationController(animationSet, animationDelay);
+    }
+
+    public static String getMinutesFromMillis(int millis) {
+        return String.format(Locale.getDefault(), "%02d:%02d",
+                TimeUnit.MILLISECONDS.toMinutes(millis),
+                TimeUnit.MILLISECONDS.toSeconds(millis) -
+                        TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(millis)));
     }
 }

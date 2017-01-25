@@ -1,6 +1,6 @@
 package smart.sonitum.Fragments;
 
-import android.content.Intent;
+import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
@@ -11,10 +11,8 @@ import android.view.ViewGroup;
 
 import java.util.ArrayList;
 
-import smart.sonitum.Activities.AudioActivity;
 import smart.sonitum.Adapters.AudioAdapter;
 import smart.sonitum.Data.Audio;
-import smart.sonitum.Data.Playlist;
 import smart.sonitum.R;
 import smart.sonitum.Utils.Utils;
 import smart.sonitum.Utils.VerticalSpaceItemDecoration;
@@ -23,6 +21,8 @@ public class AudioFragment extends Fragment {
     private static final String ARG_TRACKS = "tracks";
 
     private ArrayList<Audio> tracks;
+
+    private OnTrackStartListener listener;
 
     public AudioFragment() {}
 
@@ -57,14 +57,29 @@ public class AudioFragment extends Fragment {
         audioAdapter.setOnItemClickListener(new AudioAdapter.OnItemClickListener() {
             @Override
             public void OnItemClicked(View view, int position) {
-                Intent intent = new Intent(getActivity(), AudioActivity.class);
-                intent.putExtra("queue", tracks);
-                intent.putExtra("position", position);
-                startActivity(intent);
-                getActivity().overridePendingTransition(R.anim.pull_in_right, R.anim.push_out_left);
+                startTrack(position);
             }
         });
 
         return view;
+    }
+
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        if (context instanceof OnTrackStartListener) {
+            listener = (OnTrackStartListener) context;
+        } else {
+            throw new RuntimeException(context.toString()
+                    + " must implement OnTrackStartListener");
+        }
+    }
+
+    public interface OnTrackStartListener {
+        void onTrackStarted(ArrayList<Audio> queue, int position);
+    }
+
+    public void startTrack(int position) {
+        listener.onTrackStarted(tracks, position);
     }
 }

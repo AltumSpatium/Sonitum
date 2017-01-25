@@ -20,7 +20,12 @@
             </intent-filter>
         </activity>
         <activity android:name=".Activities.AudioActivity" />
-        <activity android:name=".Activities.SettingsActivity"></activity>
+        <activity android:name=".Activities.SettingsActivity" />
+
+        <service
+            android:name=".Services.AudioService"
+            android:enabled="true"
+            android:exported="true"></service>
     </application>
 
 </manifest>

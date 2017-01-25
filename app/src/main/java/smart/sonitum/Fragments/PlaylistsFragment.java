@@ -58,7 +58,6 @@ public class PlaylistsFragment extends Fragment implements NewPlaylistDialog.Pla
         FloatingActionButton fabAddPlaylist = (FloatingActionButton) view.findViewById(R.id.fabAddPlaylist);
         ArrayList<Audio> tracks = ((MainActivity)getActivity()).tracks;
         final NewPlaylistDialog dialog = NewPlaylistDialog.newInstance(tracks);
-        //dialog.setTargetFragment(this, 0);
         fabAddPlaylist.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

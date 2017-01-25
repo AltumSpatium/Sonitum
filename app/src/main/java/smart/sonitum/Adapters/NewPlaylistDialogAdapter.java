@@ -7,11 +7,10 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import java.util.ArrayList;
-import java.util.Locale;
-import java.util.concurrent.TimeUnit;
 
 import smart.sonitum.Data.Audio;
 import smart.sonitum.R;
+import smart.sonitum.Utils.Utils;
 
 public class NewPlaylistDialogAdapter extends RecyclerView.Adapter<AudioAdapter.AudioViewHolder> {
     private class TrackSelectModel {
@@ -57,11 +56,7 @@ public class NewPlaylistDialogAdapter extends RecyclerView.Adapter<AudioAdapter.
     public void onBindViewHolder(final AudioAdapter.AudioViewHolder avh, final int position) {
         final TrackSelectModel model = trackSelectModels.get(position);
         Audio track = tracks.get(position);
-        int millis = track.getTotalTime();
-        String time = String.format(Locale.getDefault(), "%02d:%02d",
-                TimeUnit.MILLISECONDS.toMinutes(millis),
-                TimeUnit.MILLISECONDS.toSeconds(millis) -
-                        TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(millis)));
+        String time = Utils.getMinutesFromMillis(track.getTotalTime());
 
         avh.tvAudioTitle.setText(track.getTitle());
         avh.tvAudioArtist.setText(track.getArtist());

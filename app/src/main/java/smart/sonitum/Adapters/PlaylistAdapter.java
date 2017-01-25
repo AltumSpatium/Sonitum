@@ -7,10 +7,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import java.util.ArrayList;
-import java.util.Locale;
-import java.util.concurrent.TimeUnit;
 
-import smart.sonitum.Data.Audio;
 import smart.sonitum.Data.Playlist;
 import smart.sonitum.R;
 

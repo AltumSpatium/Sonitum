@@ -7,11 +7,10 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import java.util.ArrayList;
-import java.util.Locale;
-import java.util.concurrent.TimeUnit;
 
 import smart.sonitum.Data.Audio;
 import smart.sonitum.R;
+import smart.sonitum.Utils.Utils;
 
 public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.AudioViewHolder> {
     static class AudioViewHolder extends RecyclerView.ViewHolder {
@@ -52,11 +51,8 @@ public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.AudioViewHol
     @Override
     public void onBindViewHolder(AudioViewHolder avh, final int position) {
         Audio track = tracks.get(position);
-        int millis = track.getTotalTime();
-        String time = String.format(Locale.getDefault(), "%02d:%02d",
-                TimeUnit.MILLISECONDS.toMinutes(millis),
-                TimeUnit.MILLISECONDS.toSeconds(millis) -
-                        TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(millis)));
+        String time = Utils.getMinutesFromMillis(track.getTotalTime());
+
 
         avh.tvAudioTitle.setText(track.getTitle());
         avh.tvAudioArtist.setText(track.getArtist());

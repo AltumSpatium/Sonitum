@@ -3,6 +3,7 @@ package smart.sonitum.Activities;
 import android.app.ProgressDialog;
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.Intent;
 import android.content.res.Configuration;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -42,7 +43,7 @@ import smart.sonitum.Helpers.DBHelper;
 import smart.sonitum.R;
 
 public class MainActivity extends AppCompatActivity implements AlbumsFragment.OnAlbumOpenListener,
-        ArtistsFragment.OnArtistOpenListener, PlaylistsFragment.OnPlaylistOpenListener {
+        ArtistsFragment.OnArtistOpenListener, PlaylistsFragment.OnPlaylistOpenListener, AudioFragment.OnTrackStartListener {
     private NavigationView navigationView;
     private DrawerLayout drawer;
     private Toolbar toolbar;
@@ -455,6 +456,20 @@ public class MainActivity extends AppCompatActivity implements AlbumsFragment.On
         CURRENT_TAG = TAG_CURRENT_PLAYLIST;
 
         loadMusicFragment(playlist.getName());
+    }
+
+    @Override
+    public void onTrackStarted(ArrayList<Audio> queue, int position) {
+        Playlist playlist = currentPlaylist;
+        if (playlist == null) {
+            playlist = new Playlist(queue.get(0).getAlbum(), queue);
+        }
+
+        Intent intent = new Intent(this, AudioActivity.class);
+        intent.putExtra("playlist", playlist);
+        intent.putExtra("position", position);
+        startActivity(intent);
+        overridePendingTransition(R.anim.pull_in_right, R.anim.push_out_left);
     }
 
     @Override
